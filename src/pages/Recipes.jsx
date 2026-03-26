@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 import NavBar from "../components/navBar";
 
 export default function Recipes() {
@@ -15,8 +15,8 @@ export default function Recipes() {
     const fetchRecipes = async () => {
       try {
         const [safeRes, recommendedRes] = await Promise.all([
-          axios.get(`http://localhost:3000/api/recipes/safe/${user.id}`),
-          axios.get(`http://localhost:3000/api/recipes/recommended/${user.id}`)
+          api.get(`/recipes/safe/${user.id}`),
+          api.get(`/recipes/recommended/${user.id}`)
         ]);
 
         setSafeRecipes(safeRes.data);
