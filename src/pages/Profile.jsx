@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../components/navBar";
 
@@ -28,13 +28,10 @@ export default function Profile() {
 
   const saveRestrictions = async () => {
     try {
-      await axios.post(
-        "http://localhost:3000/api/users/restrictions",
-        {
-          userId: user.id,
-          restricciones: selected
-        }
-      );
+      await api.post("/users/restrictions", {
+        userId: user.id,
+        restricciones: selected
+      });
 
       alert("Restricciones guardadas");
     navigate("/recipes");
