@@ -1,18 +1,23 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const loginUser = async (e) => {
     e.preventDefault();
-
+    setMessage("");
 
     try {
+      setLoading(true);
+
       const res = await axios.post(
         "http://localhost:3000/api/users/login",
         { email, password }
@@ -21,10 +26,17 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      alert("Login exitoso");
-      navigate("/profile");
+      setMessage("Login exitoso");
+      setMessageType("success");
+
+      setTimeout(() => {
+        navigate("/profile");
+      }, 800);
     } catch (error) {
-      alert("Error en login");
+      setMessage(error.response?.data?.message || "Error en login");
+      setMessageType("error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,13 +48,20 @@ export default function Login() {
         </h2>
 
         <p className="text-gray-500 text-center mt-2 mb-8">
-          Bienvenido de nuevo a <Link
-            to="/"
-            className="text-green-600 font-semibold hover:underline"
-          >
-             NutriEdu
-          </Link>
+          Bienvenido de nuevo a NutriEdu
         </p>
+
+        {message && (
+          <div
+            className={`mb-5 px-4 py-3 rounded-xl text-sm font-medium ${
+              messageType === "success"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {message}
+          </div>
+        )}
 
         <form onSubmit={loginUser} className="space-y-5">
           <div>
@@ -79,9 +98,10 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition"
+            disabled={loading}
+            className="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition disabled:opacity-70"
           >
-            Iniciar sesión
+            {loading ? "Ingresando..." : "Iniciar sesión"}
           </button>
         </form>
 
