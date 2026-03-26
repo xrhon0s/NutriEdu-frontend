@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 
@@ -6,19 +6,35 @@ export default function Register() {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const registerUser = async (e) => {
     e.preventDefault();
+    setMessage("");
 
     try {
+      setLoading(true);
+
       await axios.post(
         "http://localhost:3000/api/users/register",
         { nombre, email, password }
       );
 
-      alert("Usuario registrado");
+      setMessage("Usuario registrado correctamente");
+      setMessageType("success");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
     } catch (error) {
-      alert("Error en registro");
+      setMessage(error.response?.data?.message || "Error en registro");
+      setMessageType("error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -30,13 +46,20 @@ export default function Register() {
         </h2>
 
         <p className="text-gray-500 text-center mt-2 mb-8">
-          Empieza a usar <Link
-            to="/"
-            className="text-green-600 font-semibold hover:underline"
-          >
-            NutriEdu
-          </Link>
+          Empieza a usar NutriEdu
         </p>
+
+        {message && (
+          <div
+            className={`mb-5 px-4 py-3 rounded-xl text-sm font-medium ${
+              messageType === "success"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {message}
+          </div>
+        )}
 
         <form onSubmit={registerUser} className="space-y-5">
           <div>
@@ -52,7 +75,6 @@ export default function Register() {
               onChange={(e) => setNombre(e.target.value)}
               className="w-full mt-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
               required
-              
             />
           </div>
 
@@ -69,9 +91,6 @@ export default function Register() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full mt-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
               required
-              pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
-  title="Ingresa un correo válido, por ejemplo: usuario@dominio.com"
-              
             />
           </div>
 
@@ -93,9 +112,10 @@ export default function Register() {
 
           <button
             type="submit"
-            className="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition"
+            disabled={loading}
+            className="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition disabled:opacity-70"
           >
-            Registrarse
+            {loading ? "Registrando..." : "Registrarse"}
           </button>
         </form>
 
