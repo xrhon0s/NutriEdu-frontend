@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const loginUser = async (e) => {
     e.preventDefault();
+
 
     try {
       const res = await axios.post(
@@ -16,22 +19,29 @@ export default function Login() {
       );
 
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
       alert("Login exitoso");
+      navigate("/profile");
     } catch (error) {
       alert("Error en login");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-100 to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-50 via-emerald-100 to-white px-4">
       <div className="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-md border border-green-100">
         <h2 className="text-3xl font-bold text-center text-green-700">
           Iniciar sesión
         </h2>
 
         <p className="text-gray-500 text-center mt-2 mb-8">
-          Bienvenido de nuevo a NutriEdu
+          Bienvenido de nuevo a <Link
+            to="/"
+            className="text-green-600 font-semibold hover:underline"
+          >
+             NutriEdu
+          </Link>
         </p>
 
         <form onSubmit={loginUser} className="space-y-5">
