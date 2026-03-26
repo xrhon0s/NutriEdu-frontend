@@ -1,61 +1,4 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import NavBar from "../components/navBar";
-
-export default function Recipes() {
-  const [recipes, setRecipes] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost:3000/api/recipes/safe/${user.id}`
-        );
-
-        setRecipes(res.data);
-      } catch (error) {
-        console.error(error);
-        alert("Error cargando recetas");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user?.id) {
-      fetchRecipes();
-    }
-  }, [user?.id]);
-
-  const getHealthLabel = (nivel) => {
-    if (nivel >= 5) return "Muy saludable";
-    if (nivel >= 3) return "Saludable";
-    return "Moderada";
-  };
-
-  const getHealthColor = (nivel) => {
-    if (nivel >= 5) return "bg-green-100 text-green-700";
-    if (nivel >= 3) return "bg-emerald-100 text-emerald-700";
-    return "bg-yellow-100 text-yellow-700";
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-100 to-white">
-        <p className="text-lg text-gray-600">Cargando recetas...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white">
-
-  <NavBar />
-
-  <div className="px-6 py-10">
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white px-6 py-10">
+<div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white px-6 py-10">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-green-700">
@@ -141,8 +84,3 @@ export default function Recipes() {
         )}
       </div>
     </div>
-  </div>
-
-</div>
-  );
-}

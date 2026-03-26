@@ -1,9 +1,13 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import NavBar from "../components/navBar";
+
 
 export default function Profile() {
 
   const [selected, setSelected] = useState([]);
+  const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -33,12 +37,19 @@ export default function Profile() {
       );
 
       alert("Restricciones guardadas");
+    navigate("/recipes");
     } catch (error) {
       alert("Error guardando restricciones");
     }
   };
 
   return (
+
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white">
+
+  <NavBar />
+
+  <div className="p-6">
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white p-6">
 
       <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-8">
@@ -77,5 +88,10 @@ export default function Profile() {
       </div>
 
     </div>
+  </div>
+
+</div>
+    
+    
   );
 }
