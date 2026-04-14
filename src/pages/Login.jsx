@@ -23,12 +23,18 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
+      const restrictionsRes = await api.get(`/users/restrictions/${res.data.user.id}`);
+
       setMessage("Login exitoso");
       setMessageType("success");
 
       setTimeout(() => {
-        navigate("/profile");
-      }, 800);
+        if (restrictionsRes.data.hasRestrictions) {
+          navigate("/recipes");
+        } else {
+          navigate("/profile");
+        }
+}, 800);
     } catch (error) {
       setMessage(error.response?.data?.message || "Error en login");
       setMessageType("error");
