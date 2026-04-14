@@ -1,16 +1,49 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../services/api";
 import NavBar from "../components/navBar";
 
 export default function RecipeDetail() {
-  const location = useLocation();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const recipe = location.state?.recipe;
+
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const fetchRecipe = async () => {
+      try {
+        const res = await api.get(`/recipes/${id}`);
+        setRecipe(res.data);
+      } catch (error) {
+        setErrorMessage(
+          error.response?.data?.message || "No se pudo cargar la receta"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipe();
+  }, [id]);
 
   const getHealthLabel = (nivel) => {
     if (nivel >= 5) return "Muy saludable";
     if (nivel >= 3) return "Saludable";
     return "Moderada";
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white">
+        <NavBar />
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <p className="text-gray-600 text-lg">Cargando receta...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!recipe) {
     return (
@@ -19,7 +52,7 @@ export default function RecipeDetail() {
         <div className="max-w-4xl mx-auto px-6 py-16">
           <div className="bg-white rounded-3xl shadow-md p-8 text-center">
             <p className="text-gray-600 mb-4">
-              No se encontró la información de la receta.
+              {errorMessage || "No se encontró la información de la receta."}
             </p>
             <button
               onClick={() => navigate("/recipes")}
@@ -95,8 +128,8 @@ export default function RecipeDetail() {
               </h2>
               <p className="text-gray-600 leading-relaxed">
                 Esta receta forma parte de tu catálogo personalizado en NutriEdu.
-                Más adelante aquí podemos mostrar ingredientes, pasos de preparación,
-                restricciones compatibles y observaciones nutricionales.
+                Más adelante aquí podremos mostrar ingredientes, pasos de preparación,
+                compatibilidad con restricciones y observaciones nutricionales.
               </p>
             </div>
           </div>

@@ -107,7 +107,7 @@ export default function Recipes() {
         </span>
 
         <button
-          onClick={() => navigate(`/recipes/${recipe.id}`, { state: { recipe } })}
+          onClick={() => navigate(`/recipes/${recipe.id}`)}
           className="text-green-700 font-semibold text-sm hover:underline"
         >
           Ver más
