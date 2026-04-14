@@ -143,51 +143,32 @@ export default function RecipeDetail() {
                 compatibilidad con restricciones y observaciones nutricionales.
               </p>
             </div>
-                        <div className="mt-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
-                Ingredientes
-              </h2>
+                  <div className="mt-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          Ingredientes
+        </h2>
 
-              <div className="space-y-3">
-                {ingredients.map((ing) => (
-                  <div
-                    key={ing.id}
-                    className={`flex justify-between items-center p-4 rounded-xl border ${
-                      ing.compatible
-                        ? "bg-green-50 border-green-200"
-                        : "bg-red-50 border-red-200"
-                    }`}
-                  >
-                    <span className="font-medium text-gray-800">
-                      {ing.nombre}
-                    </span>
+        <div className="space-y-3">
+          {ingredients.map((ing) => (
+            <div
+              key={ing.id}
+              className={`flex justify-between items-center p-4 rounded-xl border ${
+                ing.compatible
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200"
+              }`}
+            >
+              <span className="font-medium text-gray-800">
+                {ing.nombre}
+              </span>
 
-                    <span className="text-sm font-semibold">
-                      {ing.compatible ? "✅ Apto" : "❌ No apto"}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <span className="text-sm font-semibold">
+                {ing.compatible ? "✅ Apto" : "❌ No apto"}
+              </span>
             </div>
-
-                    key={ing.id}
-                    className={`flex justify-between items-center p-4 rounded-xl border ${
-                      ing.compatible
-                        ? "bg-green-50 border-green-200"
-                        : "bg-red-50 border-red-200"
-                    }`}
-                  >
-                    <span className="font-medium text-gray-800">
-                      {ing.nombre}
-                    </span>
-
-                    <span className="text-sm font-semibold">
-                      {ing.compatible ? "✅ Apto" : "❌ No apto"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          ))}
+        </div>
+      </div>
           </div>
         </div>
       </div>
