@@ -6,6 +6,9 @@ import NavBar from "../components/navBar";
 export default function Profile() {
   const [selected, setSelected] = useState([]);
   const [checking, setChecking] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
 
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -18,12 +21,13 @@ export default function Profile() {
   ];
 
   useEffect(() => {
-    const checkRestrictions = async () => {
+    const loadRestrictions = async () => {
       try {
         const res = await api.get(`/users/restrictions/${user.id}`);
 
         if (res.data.hasRestrictions) {
-          navigate("/recipes");
+          const ids = res.data.restrictions.map((r) => r.restriccion_id);
+          setSelected(ids);
         }
       } catch (error) {
         console.error(error);
@@ -33,9 +37,9 @@ export default function Profile() {
     };
 
     if (user?.id) {
-      checkRestrictions();
+      loadRestrictions();
     }
-  }, [user?.id, navigate]);
+  }, [user?.id]);
 
   const toggleRestriction = (id) => {
     if (selected.includes(id)) {
@@ -47,14 +51,25 @@ export default function Profile() {
 
   const saveRestrictions = async () => {
     try {
+      setSaving(true);
+      setMessage("");
+
       await api.post("/users/restrictions", {
         userId: user.id,
         restricciones: selected
       });
 
-      navigate("/recipes");
+      setMessage("Restricciones guardadas correctamente");
+      setMessageType("success");
+
+      setTimeout(() => {
+        navigate("/recipes");
+      }, 800);
     } catch (error) {
-      alert(error.response?.data?.message || "Error guardando restricciones");
+      setMessage(error.response?.data?.message || "Error guardando restricciones");
+      setMessageType("error");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -63,7 +78,7 @@ export default function Profile() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white">
         <NavBar />
         <div className="flex items-center justify-center py-20">
-          <p className="text-gray-600">Verificando perfil...</p>
+          <p className="text-gray-600">Cargando perfil clínico...</p>
         </div>
       </div>
     );
@@ -80,17 +95,30 @@ export default function Profile() {
           </h2>
 
           <p className="text-gray-600 mb-6">
-            Selecciona tus restricciones alimentarias
+            Selecciona o actualiza tus restricciones alimentarias
           </p>
+
+          {message && (
+            <div
+              className={`mb-5 px-4 py-3 rounded-xl text-sm font-medium ${
+                messageType === "success"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {message}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             {restricciones.map((r) => (
               <button
                 key={r.id}
+                type="button"
                 onClick={() => toggleRestriction(r.id)}
                 className={`p-4 rounded-xl border transition ${
                   selected.includes(r.id)
-                    ? "bg-green-600 text-white"
+                    ? "bg-green-600 text-white border-green-600"
                     : "bg-white border-gray-200 hover:bg-green-50"
                 }`}
               >
@@ -101,9 +129,10 @@ export default function Profile() {
 
           <button
             onClick={saveRestrictions}
-            className="w-full mt-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700"
+            disabled={saving}
+            className="w-full mt-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition disabled:opacity-70"
           >
-            Guardar restricciones
+            {saving ? "Guardando..." : "Guardar restricciones"}
           </button>
         </div>
       </div>
