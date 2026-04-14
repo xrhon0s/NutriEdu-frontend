@@ -26,7 +26,7 @@ export default function Profile() {
         const res = await api.get(`/users/restrictions/${user.id}`);
 
         if (res.data.hasRestrictions) {
-          const ids = res.data.restrictions.map((r) => r.restriccion_id);
+          const ids = res.data.restrictions.map((r) => Number(r.restriccion_id));
           setSelected(ids);
         }
       } catch (error) {
