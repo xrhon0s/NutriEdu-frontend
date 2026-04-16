@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
+import Planner from "./pages/Planner";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -43,6 +44,15 @@ function App() {
           element={
             <ProtectedRoute>
               <RecipeDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/planner"
+          element={
+            <ProtectedRoute>
+              <Planner />
             </ProtectedRoute>
           }
         />
