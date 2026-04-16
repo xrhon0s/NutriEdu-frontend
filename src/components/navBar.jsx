@@ -42,6 +42,10 @@ export default function NavBar() {
           </button>
         </div>
 
+        <button onClick={() => navigate("/shopping-list")} className={linkClass("/shopping-list")}>
+          Compras
+        </button>
+
         <div className="flex items-center gap-4">
           <span className="hidden sm:inline text-sm text-gray-600">
             {user?.nombre || "Usuario"}

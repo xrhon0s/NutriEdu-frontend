@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
 import Planner from "./pages/Planner";
+import ShoppingList from "./pages/ShoppingList";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -53,6 +54,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Planner />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shopping-list"
+          element={
+            <ProtectedRoute>
+              <ShoppingList />
             </ProtectedRoute>
           }
         />
