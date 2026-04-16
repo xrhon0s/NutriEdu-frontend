@@ -36,6 +36,10 @@ export default function NavBar() {
           <button onClick={() => navigate("/recipes")} className={linkClass("/recipes")}>
             Recetas
           </button>
+
+          <button onClick={() => navigate("/planner")} className={linkClass("/planner")}>
+            Planificador
+          </button>
         </div>
 
         <div className="flex items-center gap-4">
