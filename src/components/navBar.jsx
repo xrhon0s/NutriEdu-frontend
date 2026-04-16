@@ -12,23 +12,34 @@ export default function NavBar() {
   };
 
   const linkClass = (path) =>
-    `font-medium transition ${
+    `px-3 py-2 rounded-xl text-sm font-medium transition ${
       location.pathname === path
-        ? "text-green-700"
-        : "text-gray-600 hover:text-green-700"
+        ? "bg-green-100 text-green-700"
+        : "text-gray-600 hover:text-green-700 hover:bg-green-50"
     }`;
 
   return (
-    <nav className="w-full bg-white/90 backdrop-blur-md border-b border-green-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <h1
+    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-green-100 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+        <div
           onClick={() => navigate("/")}
-          className="text-xl md:text-2xl font-extrabold text-green-700 cursor-pointer"
+          className="flex items-center gap-3 cursor-pointer"
         >
-          NutriEdu
-        </h1>
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center font-bold shadow-md">
+            N
+          </div>
 
-        <div className="flex items-center gap-6">
+          <div>
+            <h1 className="text-lg md:text-xl font-extrabold text-green-700 leading-none">
+              NutriEdu
+            </h1>
+            <p className="text-xs text-gray-500 hidden sm:block">
+              Nutrición personalizada
+            </p>
+          </div>
+        </div>
+
+        <div className="hidden md:flex items-center gap-2">
           <button onClick={() => navigate("/profile")} className={linkClass("/profile")}>
             Perfil
           </button>
@@ -40,20 +51,28 @@ export default function NavBar() {
           <button onClick={() => navigate("/planner")} className={linkClass("/planner")}>
             Planificador
           </button>
+
+          <button
+            onClick={() => navigate("/shopping-list")}
+            className={linkClass("/shopping-list")}
+          >
+            Compras
+          </button>
         </div>
 
-        <button onClick={() => navigate("/shopping-list")} className={linkClass("/shopping-list")}>
-          Compras
-        </button>
-
         <div className="flex items-center gap-4">
-          <span className="hidden sm:inline text-sm text-gray-600">
-            {user?.nombre || "Usuario"}
-          </span>
+          <div className="hidden sm:block text-right">
+            <p className="text-sm font-semibold text-gray-800">
+              {user?.nombre || "Usuario"}
+            </p>
+            <p className="text-xs text-gray-500">
+              Sesión activa
+            </p>
+          </div>
 
           <button
             onClick={logout}
-            className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition text-sm"
+            className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition text-sm font-medium"
           >
             Cerrar sesión
           </button>
