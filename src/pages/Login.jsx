@@ -51,7 +51,10 @@ export default function Login() {
         </h2>
 
         <p className="text-gray-500 text-center mt-2 mb-8">
-          Bienvenido de nuevo a NutriEdu
+          Bienvenido de nuevo a <Link
+            to="/"
+            className="text-green-600 font-semibold hover:underline"
+          >NutriEdu</Link>
         </p>
 
         {message && (

@@ -43,7 +43,10 @@ export default function Register() {
         </h2>
 
         <p className="text-gray-500 text-center mt-2 mb-8">
-          Empieza a usar NutriEdu
+          Empieza a usar <Link
+            to="/"
+            className="text-green-600 font-semibold hover:underline"
+          >NutriEdu</Link>
         </p>
 
         {message && (
