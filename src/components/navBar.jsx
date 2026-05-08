@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 export default function NavBar() {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export default function NavBar() {
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-green-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+        {/* Logo */}
         <div
           onClick={() => navigate("/")}
           className="flex items-center gap-3 cursor-pointer"
@@ -39,6 +40,7 @@ export default function NavBar() {
           </div>
         </div>
 
+        {/* Navegación */}
         <div className="hidden md:flex items-center gap-2">
           <button onClick={() => navigate("/profile")} className={linkClass("/profile")}>
             Perfil
@@ -58,8 +60,19 @@ export default function NavBar() {
           >
             Compras
           </button>
+
+          {/* Botón administrador solo visible para rol admin */}
+          {user?.rol === "administrador" && (
+            <button
+              onClick={() => navigate("/admin/recipes")}
+              className={linkClass("/admin/recipes")}
+            >
+              Panel Admin
+            </button>
+          )}
         </div>
 
+        {/* Usuario y logout */}
         <div className="flex items-center gap-4">
           <div className="hidden sm:block text-right">
             <p className="text-sm font-semibold text-gray-800">

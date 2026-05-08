@@ -129,8 +129,8 @@ export default function RecipeDetail() {
                 Información general
               </h2>
               <p className="text-gray-600 leading-relaxed">
-                Esta receta forma parte de tu catálogo personalizado en NutriEdu.
-                Más adelante aquí podremos mostrar ingredientes, pasos de preparación,
+                Esta receta forma parte del catalogo de NutriEdu.
+                Más adelante aquí se mostraran ingredientes, pasos de preparación,
                 compatibilidad con restricciones y observaciones nutricionales.
               </p>
             </div>

@@ -9,37 +9,36 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [restricciones, setRestricciones] = useState([]);
 
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
-  const restricciones = [
-    { id: 1, nombre: "Sin gluten" },
-    { id: 2, nombre: "Sin lactosa" },
-    { id: 3, nombre: "Diabetes" },
-    { id: 4, nombre: "Frutos secos" }
-  ];
 
-  useEffect(() => {
-    const loadRestrictions = async () => {
-      try {
-        const res = await api.get(`/users/restrictions/${user.id}`);
+useEffect(() => {
+  const loadRestrictions = async () => {
+    try {
+      // Traer todas las restricciones posibles
+      const res = await api.get("/users/restrictions");
+      const allRestrictions = res.data.restrictions;
 
-        if (res.data.hasRestrictions) {
-          const ids = res.data.restrictions.map((r) => Number(r.restriccion_id));
-          setSelected(ids);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setChecking(false);
-      }
-    };
+      // Traer las restricciones que el usuario ya tiene
+      const userRes = await api.get(`/users/restrictions/${user.id}`);
+      const userIds = userRes.data.restrictions.map(r => Number(r.restriccion_id));
 
-    if (user?.id) {
-      loadRestrictions();
+      // Marcar las seleccionadas
+      setSelected(userIds);
+      setRestricciones(allRestrictions);
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setChecking(false);
     }
-  }, [user?.id]);
+  };
+
+  if (user?.id) loadRestrictions();
+}, [user?.id]);
 
   const toggleRestriction = (id) => {
     if (selected.includes(id)) {
@@ -113,11 +112,11 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-4">
             {restricciones.map((r) => (
               <button
-                key={r.id}
+                key={r.restriccion_id}
                 type="button"
-                onClick={() => toggleRestriction(r.id)}
+                onClick={() => toggleRestriction(r.restriccion_id)}
                 className={`p-4 rounded-xl border transition ${
-                  selected.includes(r.id)
+                  selected.includes(r.restriccion_id)
                     ? "bg-green-600 text-white border-green-600"
                     : "bg-white border-gray-200 hover:bg-green-50"
                 }`}
