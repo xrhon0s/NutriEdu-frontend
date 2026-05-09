@@ -1,3 +1,85 @@
+/* Contenedor general */
+.admin-table-container {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+/* Tabla */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Encabezados */
+.admin-table th {
+  background-color: #f0fdf4; /* verde suave */
+  color: #065f46;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+/* Celdas */
+.admin-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+/* Hover filas */
+.admin-table tr:hover {
+  background-color: #d1fae5;
+  transition: background 0.2s;
+}
+
+/* Botones editar/eliminar */
+.admin-table button {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+/* Editar */
+.admin-table button.edit-btn {
+  background-color: #16a34a; /* verde */
+  color: #ffffff;
+}
+.admin-table button.edit-btn:hover {
+  background-color: #15803d;
+  transform: scale(1.05);
+}
+
+/* Eliminar */
+.admin-table button.delete-btn {
+  background-color: #dc2626; /* rojo */
+  color: #ffffff;
+}
+.admin-table button.delete-btn:hover {
+  background-color: #b91c1c;
+  transform: scale(1.05);
+}
+
+/* Botón crear nueva receta */
+.create-btn {
+  background-color: #e5e7eb; /* gris claro */
+  color: #111827;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.1s;
+  margin-bottom: 1rem;
+}
+.create-btn:hover {
+  background-color: #d1d5db;
+  transform: scale(1.02);
+}
 
 .logo {
   height: 6em;
