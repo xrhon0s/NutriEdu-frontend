@@ -11,13 +11,23 @@ export default function RecipeDetail() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [ingredients, setIngredients] = useState([]);
+  const [unsafeIngredients, setUnsafeIngredients] = useState([]);
+  const [showSubstitute, setShowSubstitute] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
+        setLoading(true);
         const res = await api.get(`/recipes/${id}`);
         setRecipe(res.data);
+
+        const ingRes = await api.get(`/recipes/${id}/ingredients`);
+        setIngredients(ingRes.data);
+
+        // Verificar ingredientes no seguros
+        const unsafeRes = await api.get(`/recipes/check/${id}/${user.id}`);
+        setUnsafeIngredients(unsafeRes.data.unsafeIngredients || []);
       } catch (error) {
         setErrorMessage(
           error.response?.data?.message || "No se pudo cargar la receta"
@@ -28,7 +38,7 @@ export default function RecipeDetail() {
     };
 
     fetchRecipe();
-  }, [id]);
+  }, [id, user.id]);
 
   const getHealthLabel = (nivel) => {
     if (nivel >= 5) return "Muy saludable";
@@ -94,10 +104,44 @@ export default function RecipeDetail() {
             </div>
           </div>
 
-          <div className="p-8">
-            <p className="text-gray-700 text-lg leading-relaxed mb-8">
-              {recipe.descripcion}
-            </p>
+          <div className="p-8 space-y-6">
+            {unsafeIngredients.length > 0 && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md animate-pulse">
+                <p className="font-semibold">⚠️ Ingredientes no seguros:</p>
+                <ul className="list-disc ml-5">
+                  {unsafeIngredients.map((ing) => (
+                    <li key={ing.id}>{ing.nombre}</li>
+                  ))}
+                </ul>
+                <button
+                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                  onClick={() => setShowSubstitute(!showSubstitute)}
+                >
+                  {showSubstitute ? "Ocultar sustitutos" : "Ver sustitutos"}
+                </button>
+              </div>
+            )}
+
+            {showSubstitute && (
+              <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+                {unsafeIngredients.map((ing) => (
+                  <div key={ing.id} className="mb-3">
+                    <label className="block font-medium text-red-700 mb-1">
+                      {ing.nombre}
+                    </label>
+                    <select className="w-full p-2 border rounded-lg">
+                      {ing.substitutes.map((sub, idx) => (
+                        <option key={idx} value={sub}>
+                          {sub}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-gray-700 text-lg leading-relaxed">{recipe.descripcion}</p>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               <div className="bg-green-50 rounded-2xl p-5">
@@ -129,8 +173,7 @@ export default function RecipeDetail() {
                 Información general
               </h2>
               <p className="text-gray-600 leading-relaxed">
-                Esta receta forma parte del catalogo de NutriEdu.
-                Más adelante aquí se mostraran ingredientes, pasos de preparación,
+                Esta receta forma parte del catálogo de NutriEdu. Más adelante aquí se mostraran ingredientes, pasos de preparación,
                 compatibilidad con restricciones y observaciones nutricionales.
               </p>
             </div>
