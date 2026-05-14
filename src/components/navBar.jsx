@@ -26,8 +26,13 @@ export default function NavBar() {
           onClick={() => navigate("/")}
           className="flex items-center gap-3 cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center font-bold shadow-md">
-            N
+       {/* Navbar Logo */}
+          <div className="w-16 h-16 flex items-center justify-center">
+            <img
+              src="/logonutri.png"       // Ruta desde public
+              alt="NutriEdu"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <div>
