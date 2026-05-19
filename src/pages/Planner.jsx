@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import NavBar from "../components/navBar";
 import UnsafeIngredientModal from "../components/UnsafeIngredientModal";
+import StatusMessage from "../components/StatusMessage";
 
 export default function Planner() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -11,6 +12,8 @@ export default function Planner() {
   const [weeklyPlan, setWeeklyPlan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
 
   const [selectedRecipe, setSelectedRecipe] = useState("");
   const [selectedDay, setSelectedDay] = useState("Lunes");
@@ -20,6 +23,10 @@ export default function Planner() {
 
   const days = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
   const mealTypes = ["Desayuno","Almuerzo","Cena"];
+
+  const clearMessageLater = () => {
+    setTimeout(() => setMessage(""), 3000);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -159,6 +166,8 @@ export default function Planner() {
             <p className="text-sm text-gray-500 mb-5">
               Selecciona una receta segura y asígnala a un espacio de tu semana.
             </p>
+
+            <StatusMessage message={message} type={messageType} />
 
             <div className="space-y-4">
               <div>
