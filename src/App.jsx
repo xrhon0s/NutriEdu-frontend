@@ -1,9 +1,12 @@
 import './App.css';
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
@@ -11,23 +14,67 @@ import Planner from "./pages/Planner";
 import ShoppingList from "./pages/ShoppingList";
 import AdminDashboard from "./pages/AdminPanel/AdminDashboard";
 
+import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-function App() {
+const withFooter = (page) => (
+  <>
+    {page}
+    <Footer />
+  </>
+);
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  const [displayLocation, setDisplayLocation] = useState(location);
+  const [transitionStage, setTransitionStage] = useState("route-enter");
   const user = JSON.parse(localStorage.getItem("user")); // obtener usuario logueado
+  const locationChanged =
+    location.pathname !== displayLocation.pathname ||
+    location.search !== displayLocation.search;
+
+  useEffect(() => {
+    if (!locationChanged) return;
+
+    const exitStart = setTimeout(() => {
+      setTransitionStage("route-exit");
+    }, 0);
+
+    const routeSwap = setTimeout(() => {
+      setDisplayLocation(location);
+      setTransitionStage("route-enter");
+    }, 140);
+
+    return () => {
+      clearTimeout(exitStart);
+      clearTimeout(routeSwap);
+    };
+  }, [location, locationChanged]);
+
+  useEffect(() => {
+    if (transitionStage !== "route-enter") return;
+
+    const timeout = setTimeout(() => {
+      setTransitionStage("route-idle");
+    }, 240);
+
+    return () => clearTimeout(timeout);
+  }, [transitionStage, displayLocation]);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
+    <div className={`route-transition ${transitionStage}`}>
+      <Routes location={displayLocation}>
+        <Route path="/" element={withFooter(<Home />)} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/profile"
           element={
             <ProtectedRoute>
-              <Profile />
+              {withFooter(<Profile />)}
             </ProtectedRoute>
           }
         />
@@ -36,7 +83,7 @@ function App() {
           path="/recipes"
           element={
             <ProtectedRoute>
-              <Recipes />
+              {withFooter(<Recipes />)}
             </ProtectedRoute>
           }
         />
@@ -45,7 +92,7 @@ function App() {
           path="/recipes/:id"
           element={
             <ProtectedRoute>
-              <RecipeDetail />
+              {withFooter(<RecipeDetail />)}
             </ProtectedRoute>
           }
         />
@@ -54,7 +101,7 @@ function App() {
           path="/planner"
           element={
             <ProtectedRoute>
-              <Planner />
+              {withFooter(<Planner />)}
             </ProtectedRoute>
           }
         />
@@ -63,7 +110,7 @@ function App() {
           path="/shopping-list"
           element={
             <ProtectedRoute>
-              <ShoppingList />
+              {withFooter(<ShoppingList />)}
             </ProtectedRoute>
           }
         />
@@ -74,7 +121,7 @@ function App() {
           element={
             user?.rol === "administrador" ? (
               <ProtectedRoute>
-              <AdminDashboard />
+                {withFooter(<AdminDashboard />)}
               </ProtectedRoute>
             ) : (
               <Navigate to="/profile" replace /> // redirige si no es admin
@@ -83,6 +130,14 @@ function App() {
         />
         
       </Routes>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AnimatedRoutes />
     </BrowserRouter>
   );
 }
