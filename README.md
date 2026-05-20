@@ -1,42 +1,8 @@
-# React + Vite
+# NutriEdu Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicacion web de NutriEdu construida con React y Vite. Es la interfaz que permite registrarse, iniciar sesion, configurar restricciones, consultar recetas seguras, planificar comidas, generar lista de compras y usar el panel administrativo.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-
-
-# 🎨 NutriEdu Frontend
-
-Aplicación web desarrollada con React y Vite para la interfaz de usuario de NutriEdu.
-
----
-
-## 🧠 Descripción
-
-El frontend de NutriEdu permite a los usuarios interactuar con la plataforma mediante una interfaz web moderna y sencilla.
-
-Actualmente incluye funcionalidades para:
-
-- visualizar la página principal
-- registrarse en la plataforma
-- iniciar sesión
-- conectarse con el backend mediante peticiones HTTP
-- almacenar el token de autenticación en el navegador
-
----
-
-## 🛠️ Tecnologías utilizadas
+## Tecnologias
 
 - React
 - Vite
@@ -44,162 +10,143 @@ Actualmente incluye funcionalidades para:
 - Axios
 - React Router DOM
 
----
+## Estructura
 
-## 📦 Estructura del proyecto
+```txt
+nutriedu-frontend/
+├── public/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   │   ├── AdminPanel/
+│   │   ├── ForgotPassword.jsx
+│   │   ├── Home.jsx
+│   │   ├── Login.jsx
+│   │   ├── Planner.jsx
+│   │   ├── Profile.jsx
+│   │   ├── RecipeDetail.jsx
+│   │   ├── Recipes.jsx
+│   │   ├── Register.jsx
+│   │   ├── ResetPassword.jsx
+│   │   └── ShoppingList.jsx
+│   ├── services/
+│   │   └── api.jsx
+│   ├── App.jsx
+│   ├── index.css
+│   └── main.jsx
+├── package.json
+└── vite.config.js
+```
+
+## Instalacion
 
 ```bash
-src/
-├── assets/
-├── components/
-│   └── navBar.jsx
-├── pages/
-│   ├── Home.jsx
-│   ├── Login.jsx
-│   └── Register.jsx
-├── services/
-│   └── api.jsx
-├── App.jsx
-├── App.css
-├── index.css
-└── main.jsx
-🔀 Rutas del frontend
-
-La aplicación utiliza React Router para definir las vistas principales:
-
-/ → página principal
-
-/login → inicio de sesión
-
-/register → registro de usuario
-
-📄 Páginas principales
-Home
-
-Pantalla de bienvenida de la plataforma.
-
-Funciones:
-
-presentar el propósito de NutriEdu
-
-permitir navegación hacia login y registro
-
-Login
-
-Pantalla para autenticación de usuarios.
-
-Funciones:
-
-capturar email y contraseña
-
-enviar solicitud al backend
-
-guardar el token recibido en localStorage
-
-Endpoint consumido:
-
-POST /api/users/login
-
-Register
-
-Pantalla para registrar nuevos usuarios.
-
-Funciones:
-
-capturar nombre, email y contraseña
-
-validar formato básico del correo
-
-enviar solicitud al backend
-
-Endpoint consumido:
-
-POST /api/users/register
-
-🌐 Comunicación con el backend
-
-La aplicación se comunica con el backend mediante Axios.
-
-Backend esperado:
-
-http://localhost:3000
-
-Endpoints usados actualmente:
-
-POST /api/users/register
-
-POST /api/users/login
-
-🔐 Manejo de autenticación
-
-El flujo actual de autenticación es:
-
-el usuario ingresa sus credenciales
-
-el frontend envía la solicitud al backend
-
-el backend valida los datos y devuelve un token JWT
-
-el frontend guarda el token en localStorage
-
-Este mecanismo permite mantener la sesión del usuario en el navegador.
-
-⚙️ Instalación y ejecución
-Instalar dependencias
+cd nutriedu-frontend
 npm install
-Ejecutar en modo desarrollo
 npm run dev
-Abrir en navegador
+```
+
+URL local por defecto:
+
+```txt
 http://localhost:5173
-📌 Estado actual del frontend
-✅ Implementado
+```
 
-landing page
+El backend esperado esta configurado en [src/services/api.jsx](src/services/api.jsx):
 
-formulario de login
+```txt
+http://localhost:3000/api
+```
 
-formulario de registro
+## Rutas
 
-navegación con React Router
+Rutas publicas:
 
-conexión con backend
+- `/`: pagina principal.
+- `/register`: registro de usuario.
+- `/login`: inicio de sesion.
+- `/forgot-password`: solicitud de correo para recuperar contrasena.
+- `/reset-password?token=...`: formulario para crear una nueva contrasena.
 
-almacenamiento de token en navegador
+Rutas privadas:
 
-🚧 Pendiente
+- `/profile`: configuracion de restricciones alimentarias.
+- `/recipes`: recetas seguras y recomendadas.
+- `/recipes/:id`: detalle de receta.
+- `/planner`: planificador semanal.
+- `/shopping-list`: lista de compras generada desde el plan.
 
-pantalla para seleccionar restricciones
+Ruta administrativa:
 
-vista de recetas seguras
+- `/admin/recipes`: panel administrativo para usuarios con rol `administrador`.
 
-vista de recetas recomendadas
+## Flujo de autenticacion
 
-protección de rutas privadas
+1. El usuario inicia sesion en `/login`.
+2. El frontend envia credenciales a `POST /api/users/login`.
+3. El backend devuelve `token` y `user`.
+4. El frontend guarda ambos en `localStorage`.
+5. `ProtectedRoute` bloquea vistas privadas cuando no hay usuario autenticado.
+6. `api.jsx` agrega automaticamente:
+   - `Authorization: Bearer <token>`
+   - `x-user-id: <id>`
 
-cierre de sesión
+## Recuperacion de contrasena
 
-manejo visual de errores
+1. El usuario abre `/forgot-password`.
+2. Ingresa su correo.
+3. El backend envia un correo con Resend.
+4. El enlace apunta a `/reset-password?token=...`.
+5. El usuario escribe una nueva contrasena.
+6. El frontend envia `token` y `password` a `POST /api/users/reset-password`.
 
-centralización de llamadas API en services/api.jsx
+## Paginas principales
 
-uso de componentes reutilizables como navbar
+- `Home.jsx`: portada y navegacion inicial.
+- `Register.jsx`: registro de usuarios.
+- `Login.jsx`: autenticacion y enlace de recuperacion.
+- `ForgotPassword.jsx`: solicitud de correo de recuperacion.
+- `ResetPassword.jsx`: cambio de contrasena con token.
+- `Profile.jsx`: seleccion de restricciones alimentarias.
+- `Recipes.jsx`: listado de recetas seguras/recomendadas.
+- `RecipeDetail.jsx`: detalle y validacion de seguridad de receta.
+- `Planner.jsx`: planificador semanal de desayuno, almuerzo y cena.
+- `ShoppingList.jsx`: ingredientes necesarios segun el plan semanal.
+- `AdminPanel/*`: gestion administrativa.
 
-💡 Mejoras recomendadas
+## Componentes compartidos
 
-crear un servicio centralizado para Axios
+- `NavBar`: navegacion principal.
+- `ProtectedRoute`: proteccion de rutas privadas.
+- `StatusMessage`: mensajes de exito/error.
+- `LoadingScreen`: pantalla de carga.
+- `EmptyState`: estado vacio reutilizable.
+- `ConfirmModal`: confirmaciones.
+- `UnsafeIngredientModal`: muestra ingredientes no seguros y sustitutos.
 
-implementar contexto de autenticación
+## Scripts
 
-proteger rutas con validación de token
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
 
-agregar redirección después del login
+## Verificacion rapida
 
-reemplazar alert() por mensajes visuales
+```bash
+npm run lint
+npm run build
+```
 
-crear componentes reutilizables
+Actualmente `lint` puede mostrar advertencias de hooks en algunas paginas existentes, pero no bloquea el build.
 
-mejorar experiencia de usuario
+## Notas de desarrollo
 
-🧩 Relación con el resto del sistema
+- Si Vite muestra errores de WebSocket/HMR, reinicia `npm run dev` y haz hard refresh del navegador.
+- Si `localhost:5173` queda en estado raro, prueba ejecutar Vite con host explicito:
 
-El frontend consume la API del backend y permite al usuario interactuar con la lógica del sistema sin acceder directamente a la base de datos.
+```bash
+npm run dev -- --host 127.0.0.1
+```
