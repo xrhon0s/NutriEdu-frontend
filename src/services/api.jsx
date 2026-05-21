@@ -11,12 +11,6 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // Enviar automáticamente el ID del usuario para el middleware admin
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (user?.id) {
-    config.headers["x-user-id"] = user.id; // <-- esto permite que verifyAdmin funcione
-  }
-
   return config;
 });
 

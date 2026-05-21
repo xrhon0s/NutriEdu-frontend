@@ -12,13 +12,18 @@ export default function Recipes() {
   // Estados de búsqueda y filtros
   const [query, setQuery] = useState("");
   const [nivelFilter, setNivelFilter] = useState("");
-  const [tipoFilter, setTipoFilter] = useState("");
   const [caloriasMin, setCaloriasMin] = useState("");
   const [caloriasMax, setCaloriasMax] = useState("");
 
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const searchInputRef = useRef(null);
+
+  const healthRanges = {
+    muy_saludable: { min: 5 },
+    saludable: { min: 3, max: 4 },
+    moderada: { max: 2 },
+  };
 
   useEffect(() => {
     const fetchRecipes = async () => {
@@ -41,17 +46,18 @@ export default function Recipes() {
 
   const fetchSearchResults = useCallback(
     debounce(async () => {
-      if (query.trim() === "" && !nivelFilter && !tipoFilter && !caloriasMin && !caloriasMax) {
+      if (query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax) {
         setSearchResults([]);
         return;
       }
 
       try {
+        const healthRange = healthRanges[nivelFilter] || {};
         const res = await api.get(`/recipes/search/${user.id}`, {
           params: {
             query: query || undefined,
-            nivel_salud: nivelFilter || undefined,
-            tipo: tipoFilter || undefined,
+            nivel_min: healthRange.min,
+            nivel_max: healthRange.max,
             calorias_min: caloriasMin || undefined,
             calorias_max: caloriasMax || undefined,
           },
@@ -61,12 +67,12 @@ export default function Recipes() {
         console.error(err);
       }
     }, 300),
-    [user?.id, query, nivelFilter, tipoFilter, caloriasMin, caloriasMax]
+    [user?.id, query, nivelFilter, caloriasMin, caloriasMax]
   );
 
   useEffect(() => {
     fetchSearchResults();
-  }, [query, nivelFilter, tipoFilter, caloriasMin, caloriasMax, fetchSearchResults]);
+  }, [query, nivelFilter, caloriasMin, caloriasMax, fetchSearchResults]);
 
   function debounce(fn, delay) {
     let timer;
@@ -79,7 +85,6 @@ export default function Recipes() {
   const resetFilters = () => {
     setQuery("");
     setNivelFilter("");
-    setTipoFilter("");
     setCaloriasMin("");
     setCaloriasMax("");
     searchInputRef.current.focus();
@@ -164,15 +169,9 @@ export default function Recipes() {
         <div className="flex gap-3 mb-6 flex-wrap items-center">
           <select value={nivelFilter} onChange={(e) => setNivelFilter(e.target.value)} className="border rounded-xl p-2">
             <option value="">Nivel de salud</option>
-            <option value="5">Muy saludable</option>
-            <option value="3">Saludable</option>
-            <option value="1">Moderada</option>
-          </select>
-          <select value={tipoFilter} onChange={(e) => setTipoFilter(e.target.value)} className="border rounded-xl p-2">
-            <option value="">Tipo de receta</option>
-            <option value="Desayuno">Desayuno</option>
-            <option value="Plato principal">Plato principal</option>
-            <option value="Snack">Snack</option>
+            <option value="muy_saludable">Muy saludable</option>
+            <option value="saludable">Saludable</option>
+            <option value="moderada">Moderada</option>
           </select>
           <input type="number" placeholder="Calorías mínimas" value={caloriasMin} onChange={(e) => setCaloriasMin(e.target.value)} className="border rounded-xl p-2 w-36"/>
           <input type="number" placeholder="Calorías máximas" value={caloriasMax} onChange={(e) => setCaloriasMax(e.target.value)} className="border rounded-xl p-2 w-36"/>
@@ -180,7 +179,7 @@ export default function Recipes() {
         </div>
 
         {/* Contenido */}
-        {query.length === 0 && !nivelFilter && !tipoFilter && !caloriasMin && !caloriasMax ? (
+        {query.length === 0 && !nivelFilter && !caloriasMin && !caloriasMax ? (
           <>
             {/* Recetas seguras */}
             <section className="mb-10">

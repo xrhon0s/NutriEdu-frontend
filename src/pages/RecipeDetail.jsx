@@ -122,8 +122,7 @@ export default function RecipeDetail() {
             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-3">Información general</h2>
               <p className="text-gray-700 leading-relaxed">
-                Esta receta forma parte del catálogo de NutriEdu. Más adelante aquí se mostrarán ingredientes,
-                pasos de preparación, compatibilidad con restricciones y observaciones nutricionales.
+                {recipe.descripcion || "Esta receta no tiene una descripción registrada todavía."}
               </p>
             </div>
           </div>
