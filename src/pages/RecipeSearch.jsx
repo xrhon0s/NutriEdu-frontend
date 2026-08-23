@@ -5,34 +5,32 @@ import RecipeCard from "../components/RecipeCard"; // usa tu card existente
 
 export default function RecipeSearch() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = JSON.parse(localStorage.getItem("user"))?.id;
 
   const [query, setQuery] = useState("");
   const [safeRecipes, setSafeRecipes] = useState([]);
   const [recommendedRecipes, setRecommendedRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRecipes = async () => {
-    try {
-      setLoading(true);
-
-      // Recetas seguras (todas)
-      const safeRes = await api.get(`/recipes/safe/${user.id}`);
-      setSafeRecipes(safeRes.data);
-
-      // Recetas recomendadas (subset)
-      const recRes = await api.get(`/recipes/recommended/${user.id}`);
-      setRecommendedRecipes(recRes.data);
-    } catch (err) {
-      console.error("Error cargando recetas:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchRecipes();
-  }, []);
+    const fetchRecipes = async () => {
+      try {
+        setLoading(true);
+        const [safeRes, recRes] = await Promise.all([
+          api.get(`/recipes/safe/${userId}`),
+          api.get(`/recipes/recommended/${userId}`),
+        ]);
+        setSafeRecipes(safeRes.data);
+        setRecommendedRecipes(recRes.data);
+      } catch (err) {
+        console.error("Error cargando recetas:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) fetchRecipes();
+  }, [userId]);
 
   // Filtrado por búsqueda libre
   const filteredSafe = safeRecipes.filter((r) =>

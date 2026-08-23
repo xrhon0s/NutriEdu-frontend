@@ -58,6 +58,7 @@ export default function Register() {
           type="text"
           name="nombre"
           placeholder="Tu nombre"
+          autoComplete="name"
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           required
@@ -68,6 +69,7 @@ export default function Register() {
           type="email"
           name="email"
           placeholder="correo@email.com"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -78,6 +80,7 @@ export default function Register() {
           type="password"
           name="password"
           placeholder="********"
+          autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

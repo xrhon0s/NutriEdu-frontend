@@ -6,7 +6,7 @@ import LoadingScreen from "../components/LoadingScreen";
 import EmptyState from "../components/EmptyState";
 
 export default function ShoppingList() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = JSON.parse(localStorage.getItem("user"))?.id;
 
   const [items, setItems] = useState([]);
   const [checkedItems, setCheckedItems] = useState({});
@@ -16,7 +16,7 @@ export default function ShoppingList() {
   useEffect(() => {
     const fetchList = async () => {
       try {
-        const res = await api.get(`/planner/${user.id}/shopping-list`);
+        const res = await api.get(`/planner/${userId}/shopping-list`);
         setItems(res.data);
 
         // cargar estado guardado en localStorage
@@ -30,8 +30,8 @@ export default function ShoppingList() {
       }
     };
 
-    fetchList();
-  }, []);
+    if (userId) fetchList();
+  }, [userId]);
 
   // ================= Toggle checkbox =================
   const toggleItem = (id) => {

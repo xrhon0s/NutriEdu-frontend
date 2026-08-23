@@ -1,7 +1,13 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import NavBar from "../components/navBar";
+
+const healthRanges = {
+  muy_saludable: { min: 5 },
+  saludable: { min: 3, max: 4 },
+  moderada: { max: 2 },
+};
 
 export default function Recipes() {
   const [safeRecipes, setSafeRecipes] = useState([]);
@@ -16,22 +22,16 @@ export default function Recipes() {
   const [caloriasMax, setCaloriasMax] = useState("");
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = JSON.parse(localStorage.getItem("user"))?.id;
   const searchInputRef = useRef(null);
-
-  const healthRanges = {
-    muy_saludable: { min: 5 },
-    saludable: { min: 3, max: 4 },
-    moderada: { max: 2 },
-  };
 
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
         setLoading(true);
         const [safeRes, recommendedRes] = await Promise.all([
-          api.get(`/recipes/safe/${user.id}`),
-          api.get(`/recipes/recommended/${user.id}`)
+          api.get(`/recipes/safe/${userId}`),
+          api.get(`/recipes/recommended/${userId}`)
         ]);
         setSafeRecipes(safeRes.data);
         setRecommendedRecipes(recommendedRes.data);
@@ -41,11 +41,11 @@ export default function Recipes() {
         setLoading(false);
       }
     };
-    if (user?.id) fetchRecipes();
-  }, [user?.id]);
+    if (userId) fetchRecipes();
+  }, [userId]);
 
-  const fetchSearchResults = useCallback(
-    debounce(async () => {
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
       if (query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax) {
         setSearchResults([]);
         return;
@@ -53,7 +53,7 @@ export default function Recipes() {
 
       try {
         const healthRange = healthRanges[nivelFilter] || {};
-        const res = await api.get(`/recipes/search/${user.id}`, {
+        const res = await api.get(`/recipes/search/${userId}`, {
           params: {
             query: query || undefined,
             nivel_min: healthRange.min,
@@ -66,21 +66,10 @@ export default function Recipes() {
       } catch (err) {
         console.error(err);
       }
-    }, 300),
-    [user?.id, query, nivelFilter, caloriasMin, caloriasMax]
-  );
+    }, 300);
 
-  useEffect(() => {
-    fetchSearchResults();
-  }, [query, nivelFilter, caloriasMin, caloriasMax, fetchSearchResults]);
-
-  function debounce(fn, delay) {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn(...args), delay);
-    };
-  }
+    return () => window.clearTimeout(timer);
+  }, [userId, query, nivelFilter, caloriasMin, caloriasMax]);
 
   const resetFilters = () => {
     setQuery("");

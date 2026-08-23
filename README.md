@@ -52,10 +52,16 @@ URL local por defecto:
 http://localhost:5173
 ```
 
-El backend esperado esta configurado en [src/services/api.jsx](src/services/api.jsx):
+El backend esperado esta configurado en [src/services/api.jsx](src/services/api.jsx). En local usa:
 
 ```txt
 http://localhost:3000/api
+```
+
+En despliegue usa la variable:
+
+```env
+VITE_API_URL=https://tu-backend.onrender.com/api
 ```
 
 ## Rutas
@@ -87,9 +93,9 @@ Ruta administrativa:
 3. El backend devuelve `token` y `user`.
 4. El frontend guarda ambos en `localStorage`.
 5. `ProtectedRoute` bloquea vistas privadas cuando no hay usuario autenticado.
-6. `api.jsx` agrega automaticamente:
-   - `Authorization: Bearer <token>`
-   - `x-user-id: <id>`
+6. `api.jsx` agrega automaticamente `Authorization: Bearer <token>`.
+
+El backend obtiene el usuario autenticado desde el JWT. El frontend ya no envia `x-user-id`.
 
 ## Recuperacion de contrasena
 
@@ -117,6 +123,8 @@ Ruta administrativa:
 ## Componentes compartidos
 
 - `NavBar`: navegacion principal.
+- `Footer`: pie de pagina compartido en vistas principales.
+- `AuthLayout`: layout reutilizable para login, registro y recuperacion de contrasena.
 - `ProtectedRoute`: proteccion de rutas privadas.
 - `StatusMessage`: mensajes de exito/error.
 - `LoadingScreen`: pantalla de carga.
@@ -142,6 +150,26 @@ npm run build
 
 Actualmente `lint` puede mostrar advertencias de hooks en algunas paginas existentes, pero no bloquea el build.
 
+## Despliegue en Vercel
+
+Configuracion recomendada:
+
+```txt
+Framework Preset: Vite
+Root Directory: nutriedu-frontend
+Build Command: npm run build
+Output Directory: dist
+Install Command: npm install
+```
+
+Variable de entorno:
+
+```env
+VITE_API_URL=https://tu-backend.onrender.com/api
+```
+
+Despues de desplegar el frontend, agrega su URL en el backend como `FRONTEND_URL` para que CORS permita las solicitudes desde Vercel.
+
 ## Notas de desarrollo
 
 - Si Vite muestra errores de WebSocket/HMR, reinicia `npm run dev` y haz hard refresh del navegador.
@@ -150,3 +178,7 @@ Actualmente `lint` puede mostrar advertencias de hooks en algunas paginas existe
 ```bash
 npm run dev -- --host 127.0.0.1
 ```
+
+- Las transiciones entre paginas estan configuradas en `App.jsx` y `App.css`.
+
+Proyecto desarrollado por David Sanchez, Nerver Fernandez y Sebastian Marquez.
