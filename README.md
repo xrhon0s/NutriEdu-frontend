@@ -86,6 +86,8 @@ Ruta administrativa:
 
 - `/admin/recipes`: panel administrativo para usuarios con rol `administrador`.
 
+La pestana Operacion del panel muestra metricas agregadas, cobertura de perfiles, presupuesto de IA y ledger de migraciones. Recetas e ingredientes conservan pestanas de gestion; editar y eliminar ingredientes ya cuentan con rutas backend protegidas por JWT y rol.
+
 ## Flujo de autenticacion
 
 1. El usuario inicia sesion en `/login`.

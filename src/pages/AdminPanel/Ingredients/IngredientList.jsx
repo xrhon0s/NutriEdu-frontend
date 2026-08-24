@@ -23,7 +23,7 @@ export default function IngredientList({ onEdit }) {
     if (!confirm("¿Deseas eliminar este ingrediente?")) return;
     try {
       await api.delete(`/admin/ingredients/${id}`);
-      setIngredients(ingredients.filter(i => i.id !== id));
+      setIngredients((current) => current.filter((ingredient) => ingredient.id !== id));
     } catch (err) {
       console.error(err);
       alert("Error eliminando ingrediente");
