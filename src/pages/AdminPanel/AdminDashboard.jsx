@@ -5,9 +5,13 @@ import OperationsOverview from "./OperationsOverview";
 import RecipeForm from "./Recipes/RecipeForm";
 import RecipeList from "./Recipes/RecipeList";
 import NavBar from "../../components/navBar";
+import UsersAdmin from "./UsersAdmin";
+import ClinicalCatalogs from "./ClinicalCatalogs";
 
 const tabs = [
   { id: "overview", label: "Operacion" },
+  { id: "users", label: "Usuarios" },
+  { id: "clinical", label: "Catalogos clinicos" },
   { id: "recipes", label: "Recetas" },
   { id: "ingredients", label: "Ingredientes" },
 ];
@@ -48,6 +52,8 @@ export default function AdminDashboard() {
         </div>
 
         {tab === "overview" ? <OperationsOverview /> : null}
+        {tab === "users" ? <UsersAdmin /> : null}
+        {tab === "clinical" ? <ClinicalCatalogs /> : null}
 
         {tab === "recipes" ? (
           <section className="rounded-lg border border-gray-200 bg-white p-5">

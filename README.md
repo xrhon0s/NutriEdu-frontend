@@ -86,7 +86,7 @@ Ruta administrativa:
 
 - `/admin/recipes`: panel administrativo para usuarios con rol `administrador`.
 
-La pestana Operacion del panel muestra metricas agregadas, cobertura de perfiles, presupuesto de IA y ledger de migraciones. Recetas e ingredientes conservan pestanas de gestion; editar y eliminar ingredientes ya cuentan con rutas backend protegidas por JWT y rol.
+La pestana Operacion muestra metricas agregadas, cobertura de perfiles, presupuesto de IA y ledger de migraciones. Usuarios incorpora busqueda, filtro, paginacion, cobertura clinica y gestion protegida de roles. Catalogos clinicos permite crear, editar, activar y desactivar objetivos y condiciones. Recetas e ingredientes conservan sus pestanas de gestion; todas estas operaciones requieren JWT y rol administrativo verificado en backend.
 
 ## Flujo de autenticacion
 
