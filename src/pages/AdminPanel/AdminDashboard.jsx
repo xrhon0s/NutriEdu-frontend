@@ -7,11 +7,15 @@ import RecipeList from "./Recipes/RecipeList";
 import NavBar from "../../components/navBar";
 import UsersAdmin from "./UsersAdmin";
 import ClinicalCatalogs from "./ClinicalCatalogs";
+import RulesAndRestrictions from "./RulesAndRestrictions";
+import VisionUsageAdmin from "./VisionUsageAdmin";
 
 const tabs = [
   { id: "overview", label: "Operacion" },
   { id: "users", label: "Usuarios" },
   { id: "clinical", label: "Catalogos clinicos" },
+  { id: "rules", label: "Reglas" },
+  { id: "vision", label: "Uso de IA" },
   { id: "recipes", label: "Recetas" },
   { id: "ingredients", label: "Ingredientes" },
 ];
@@ -38,13 +42,13 @@ export default function AdminDashboard() {
           <h1 className="mt-1 text-2xl font-bold text-gray-950">Operacion de NutriEdu</h1>
         </header>
 
-        <div className="mb-6 flex border-b border-gray-200" role="tablist">
+        <div className="mb-6 flex overflow-x-auto border-b border-gray-200" role="tablist">
           {tabs.map((item) => (
             <button
               key={item.id}
               role="tab"
               aria-selected={tab === item.id}
-              className={`min-h-11 border-b-2 px-4 text-sm font-semibold ${tab === item.id ? "border-green-600 text-green-700" : "border-transparent text-gray-500 hover:text-gray-800"}`}
+              className={`min-h-11 shrink-0 border-b-2 px-4 text-sm font-semibold ${tab === item.id ? "border-green-600 text-green-700" : "border-transparent text-gray-500 hover:text-gray-800"}`}
               onClick={() => selectTab(item.id)}>
               {item.label}
             </button>
@@ -54,6 +58,8 @@ export default function AdminDashboard() {
         {tab === "overview" ? <OperationsOverview /> : null}
         {tab === "users" ? <UsersAdmin /> : null}
         {tab === "clinical" ? <ClinicalCatalogs /> : null}
+        {tab === "rules" ? <RulesAndRestrictions /> : null}
+        {tab === "vision" ? <VisionUsageAdmin /> : null}
 
         {tab === "recipes" ? (
           <section className="rounded-lg border border-gray-200 bg-white p-5">
