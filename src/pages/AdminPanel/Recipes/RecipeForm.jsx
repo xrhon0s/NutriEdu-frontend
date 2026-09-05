@@ -11,6 +11,10 @@ export default function RecipeForm({ recipe, onFinish }) {
   const [calorias, setCalorias] = useState(recipe?.calorias || "");
   const [tiempo, setTiempo] = useState(recipe?.tiempo_preparacion || "");
   const [ingredients, setIngredients] = useState([]);
+  const [ingredientPage, setIngredientPage] = useState(1);
+  const [ingredientPagination, setIngredientPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [ingredientQuery, setIngredientQuery] = useState("");
+  const [ingredientSearch, setIngredientSearch] = useState("");
   const [selectedIngredients, setSelectedIngredients] = useState(
     recipe?.ingredients?.map((i) => i.id) || []
   );
@@ -20,8 +24,11 @@ export default function RecipeForm({ recipe, onFinish }) {
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
-        const res = await api.get("/admin/ingredients", { params: { all: "true" } });
+        const res = await api.get("/admin/ingredients", {
+          params: { page: ingredientPage, limit: 12, search: ingredientSearch || undefined }
+        });
         setIngredients(res.data.items);
+        setIngredientPagination(res.data.pagination);
       } catch (error) {
         console.error("Error cargando ingredientes:", error);
       } finally {
@@ -29,7 +36,7 @@ export default function RecipeForm({ recipe, onFinish }) {
       }
     };
     fetchIngredients();
-  }, []);
+  }, [ingredientPage, ingredientSearch]);
 
   const toggleIngredient = (id) => {
     if (selectedIngredients.includes(id)) {
@@ -61,8 +68,6 @@ export default function RecipeForm({ recipe, onFinish }) {
       alert("Ocurrió un error al guardar la receta");
     }
   };
-
-  if (loading) return <p>Cargando ingredientes...</p>;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -115,9 +120,18 @@ export default function RecipeForm({ recipe, onFinish }) {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-2">Ingredientes</h3>
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="font-semibold">Ingredientes</h3>
+            <p className="text-sm text-gray-500">{selectedIngredients.length} seleccionados de {ingredientPagination.total}</p>
+          </div>
+          <div className="flex min-w-0 flex-1 gap-2 sm:max-w-md">
+            <input type="search" value={ingredientQuery} onChange={(event) => setIngredientQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setIngredientPage(1); setIngredientSearch(ingredientQuery.trim()); } }} placeholder="Buscar ingrediente" className="min-h-11 min-w-0 flex-1 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-green-600" />
+            <button type="button" onClick={() => { setIngredientPage(1); setIngredientSearch(ingredientQuery.trim()); }} className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm font-semibold">Buscar</button>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-2">
-          {ingredients.map((i) => (
+          {loading ? <p className="col-span-2 py-6 text-center text-sm text-gray-500">Consultando ingredientes...</p> : ingredients.map((i) => (
             <button
               key={i.id}
               type="button"
@@ -131,6 +145,12 @@ export default function RecipeForm({ recipe, onFinish }) {
               {i.nombre}
             </button>
           ))}
+        </div>
+        {!loading && ingredients.length === 0 ? <p className="py-6 text-center text-sm text-gray-500">No se encontraron ingredientes.</p> : null}
+        <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+          <button type="button" disabled={ingredientPage <= 1 || loading} onClick={() => setIngredientPage((value) => value - 1)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold disabled:opacity-40">Anterior</button>
+          <span className="text-sm text-gray-500">Página {ingredientPagination.page} de {ingredientPagination.totalPages}</span>
+          <button type="button" disabled={ingredientPage >= ingredientPagination.totalPages || loading} onClick={() => setIngredientPage((value) => value + 1)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold disabled:opacity-40">Siguiente</button>
         </div>
       </div>
 

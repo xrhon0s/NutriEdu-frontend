@@ -90,6 +90,8 @@ La pestana Operacion muestra metricas agregadas, cobertura de perfiles, presupue
 
 Recetas publicas usan paginacion incremental. La seleccion de restricciones del perfil incorpora busqueda y paginas sin perder selecciones. En administracion, recetas, ingredientes y restricciones incluyen busqueda y paginacion de servidor; ingredientes tambien se filtran y editan por grupo alimentario.
 
+El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina.
+
 ## Flujo de autenticacion
 
 1. El usuario inicia sesion en `/login`.
