@@ -1,84 +1,53 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../../services/api";
 
 export default function RecipeList({ onEdit }) {
   const [recipes, setRecipes] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const res = await api.get("/admin/recipes");
-        setRecipes(res.data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRecipes();
-  }, []);
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const response = await api.get("/admin/recipes", { params: { page, limit: 15, search: search || undefined } });
+      setRecipes(response.data.items);
+      setPagination(response.data.pagination);
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || "No se pudieron consultar las recetas");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search]);
+
+  useEffect(() => { void load(); }, [load]);
 
   const deleteRecipe = async (id) => {
     if (!confirm("¿Seguro que quieres eliminar esta receta?")) return;
     try {
       await api.delete(`/admin/recipes/${id}`);
-      setRecipes(recipes.filter((r) => r.id !== id));
-    } catch (error) {
-      console.error(error);
-      alert("Error eliminando receta");
+      await load();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "No se pudo eliminar la receta");
     }
   };
 
-  if (loading) return <p>Cargando recetas...</p>;
+  return <div className="space-y-5">
+    <form onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(query.trim()); }} className="flex gap-3">
+      <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o descripción" className="input-admin flex-1" />
+      <button className="min-h-11 rounded-lg border border-gray-300 px-5 text-sm font-semibold">Buscar</button>
+    </form>
+    <p className="text-sm text-gray-500">{pagination.total} recetas registradas.</p>
+    {error ? <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+    <div className="overflow-x-auto border-y border-gray-200"><table className="w-full min-w-[980px] text-left text-sm"><thead className="bg-gray-50 text-xs text-gray-500"><tr><th className="p-3">ID</th><th className="p-3">Nombre</th><th className="p-3">Descripción</th><th className="p-3">Calorías</th><th className="p-3">Tiempo</th><th className="p-3">Ingredientes</th><th className="p-3 text-right">Acciones</th></tr></thead><tbody>{loading ? <tr><td colSpan="7" className="py-10 text-center text-gray-500">Consultando recetas...</td></tr> : recipes.map((recipe) => { const names = recipe.ingredients?.map((item) => item.nombre).join(", ") || "-"; return <tr key={recipe.id} className="border-t border-gray-100"><td className="p-3">{recipe.id}</td><td className="p-3 font-semibold">{recipe.nombre}</td><td className="max-w-xs truncate p-3" title={recipe.descripcion}>{recipe.descripcion}</td><td className="p-3">{recipe.calorias}</td><td className="p-3">{recipe.tiempo_preparacion} min</td><td className="max-w-xs truncate p-3" title={names}>{names}</td><td className="p-3 text-right"><button onClick={() => onEdit(recipe)} className="mr-3 font-semibold text-green-700">Editar</button><button onClick={() => void deleteRecipe(recipe.id)} className="font-semibold text-red-700">Eliminar</button></td></tr>; })}</tbody></table></div>
+    <AdminPagination pagination={pagination} page={page} setPage={setPage} />
+  </div>;
+}
 
-  return (
-    <div className="admin-table-container">
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Calorías</th>
-            <th>Tiempo</th>
-            <th>Ingredientes</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recipes.map((r) => {
-            const ingredientNames = r.ingredients?.map((i) => i.nombre).join(", ") || "-";
-            return (
-              <tr key={r.id} className="hover:bg-gray-50">
-                <td>{r.id}</td>
-                <td>{r.nombre}</td>
-                <td>{r.descripcion}</td>
-                <td>{r.calorias}</td>
-                <td>{r.tiempo_preparacion}</td>
-                <td>
-                  <span
-                    title={ingredientNames}               // tooltip completo
-                    className="inline-block max-w-xs truncate"  // trunca la lista visualmente
-                  >
-                    {ingredientNames}
-                  </span>
-                </td>
-                <td className="flex gap-2">
-                  <button onClick={() => onEdit(r)} className="edit-btn">
-                    Editar
-                  </button>
-                  <button onClick={() => deleteRecipe(r.id)} className="delete-btn">
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-     
-    </div>
-  );
+function AdminPagination({ pagination, page, setPage }) {
+  return <div className="flex items-center justify-between"><button disabled={page <= 1} onClick={() => setPage(page - 1)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold disabled:opacity-40">Anterior</button><span className="text-sm text-gray-500">Página {pagination.page} de {pagination.totalPages}</span><button disabled={page >= pagination.totalPages} onClick={() => setPage(page + 1)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold disabled:opacity-40">Siguiente</button></div>;
 }

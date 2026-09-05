@@ -117,10 +117,23 @@ export default function Profile() {
   const [goals, setGoals] = useState([]);
   const [conditions, setConditions] = useState([]);
   const [restrictions, setRestrictions] = useState([]);
+  const [restrictionQuery, setRestrictionQuery] = useState("");
+  const [restrictionPage, setRestrictionPage] = useState(1);
   const [selectedGoals, setSelectedGoals] = useState([]);
   const [selectedConditions, setSelectedConditions] = useState([]);
   const [selectedRestrictions, setSelectedRestrictions] = useState([]);
   const user = useMemo(() => JSON.parse(localStorage.getItem("user")), []);
+  const filteredRestrictions = useMemo(() => {
+    const normalizedQuery = restrictionQuery.trim().toLocaleLowerCase("es");
+    return normalizedQuery
+      ? restrictions.filter((restriction) => restriction.nombre.toLocaleLowerCase("es").includes(normalizedQuery))
+      : restrictions;
+  }, [restrictionQuery, restrictions]);
+  const restrictionPageSize = 8;
+  const restrictionTotalPages = Math.max(1, Math.ceil(filteredRestrictions.length / restrictionPageSize));
+  const visibleRestrictions = filteredRestrictions.slice((restrictionPage - 1) * restrictionPageSize, restrictionPage * restrictionPageSize);
+
+  useEffect(() => { setRestrictionPage(1); }, [restrictionQuery]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -269,13 +282,16 @@ export default function Profile() {
             </div>
             <div className="border-t border-gray-200 pt-8">
               <SectionTitle title="Restricciones alimentarias" text="Se aplican al evaluar ingredientes y recetas." />
+              <input type="search" value={restrictionQuery} onChange={(event) => setRestrictionQuery(event.target.value)} placeholder="Buscar restricción" className={`${inputClass} mb-4`} />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {restrictions.map((restriction) => {
+                {visibleRestrictions.map((restriction) => {
                   const id = Number(restriction.restriccion_id);
                   const selected = selectedRestrictions.includes(id);
                   return <button key={id} type="button" aria-pressed={selected} onClick={() => setSelectedRestrictions((current) => toggleValue(current, id))} className={`min-h-14 rounded-lg border px-4 py-3 text-sm font-semibold transition ${selected ? "border-green-500 bg-green-50 text-green-800" : "border-gray-200 bg-white text-gray-700 hover:border-green-300"}`}>{restriction.nombre}</button>;
                 })}
               </div>
+              {visibleRestrictions.length === 0 ? <p className="py-5 text-sm text-gray-500">No se encontraron restricciones.</p> : null}
+              <div className="mt-5 flex items-center justify-between"><button type="button" disabled={restrictionPage <= 1} onClick={() => setRestrictionPage((value) => value - 1)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold disabled:opacity-40">Anterior</button><span className="text-sm text-gray-500">Página {restrictionPage} de {restrictionTotalPages}</span><button type="button" disabled={restrictionPage >= restrictionTotalPages} onClick={() => setRestrictionPage((value) => value + 1)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold disabled:opacity-40">Siguiente</button></div>
             </div>
             <SaveRow onSave={saveClinical} disabled={Boolean(saving)} saving={saving === "clinical"} label="Guardar salud y restricciones" />
           </div>

@@ -3,6 +3,8 @@ import { useState } from "react";
 import api from "../services/api";
 import { AuthField, AuthLayout, AuthSubmitButton } from "../components/AuthLayout";
 import StatusMessage from "../components/StatusMessage";
+import PasswordRequirements from "../components/PasswordRequirements";
+import { isPasswordValid } from "../utils/passwordPolicy";
 
 export default function Register() {
   const [nombre, setNombre] = useState("");
@@ -17,6 +19,12 @@ export default function Register() {
   const registerUser = async (e) => {
     e.preventDefault();
     setMessage("");
+
+    if (!isPasswordValid(password)) {
+      setMessage("Revisa los requisitos de la contraseña antes de continuar");
+      setMessageType("error");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -83,10 +91,15 @@ export default function Register() {
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          minLength={10}
+          maxLength={72}
+          aria-invalid={password.length > 0 && !isPasswordValid(password)}
           required
         />
 
-        <AuthSubmitButton loading={loading} loadingText="Registrando...">
+        <PasswordRequirements password={password} />
+
+        <AuthSubmitButton loading={loading} loadingText="Registrando..." disabled={!isPasswordValid(password)}>
           Registrarse
         </AuthSubmitButton>
       </form>

@@ -20,8 +20,8 @@ export default function RecipeForm({ recipe, onFinish }) {
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
-        const res = await api.get("/admin/ingredients");
-        setIngredients(res.data);
+        const res = await api.get("/admin/ingredients", { params: { all: "true" } });
+        setIngredients(res.data.items);
       } catch (error) {
         console.error("Error cargando ingredientes:", error);
       } finally {

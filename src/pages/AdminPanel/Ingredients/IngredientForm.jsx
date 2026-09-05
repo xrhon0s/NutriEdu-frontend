@@ -4,6 +4,7 @@ import api from "../../../services/api";
 export default function IngredientForm({ ingredient, onFinish }) {
   const isEditing = !!ingredient;
   const [nombre, setNombre] = useState(ingredient?.nombre || "");
+  const [foodGroup, setFoodGroup] = useState(ingredient?.food_group || "other");
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -12,9 +13,9 @@ export default function IngredientForm({ ingredient, onFinish }) {
 
     try {
       if (isEditing) {
-        await api.put(`/admin/ingredients/${ingredient.id}`, { nombre });
+        await api.put(`/admin/ingredients/${ingredient.id}`, { nombre, foodGroup });
       } else {
-        await api.post("/admin/ingredients", { nombre });
+        await api.post("/admin/ingredients", { nombre, foodGroup });
       }
       onFinish();
     } catch (err) {
@@ -37,6 +38,13 @@ export default function IngredientForm({ ingredient, onFinish }) {
           className="w-full p-3 border rounded-xl"
           required
         />
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium">Grupo alimentario</label>
+        <select value={foodGroup} onChange={(event) => setFoodGroup(event.target.value)} className="w-full rounded-lg border p-3" required>
+          <option value="protein">Proteínas</option><option value="carbohydrate">Cereales y carbohidratos</option><option value="vegetable">Verduras</option><option value="fruit">Frutas</option><option value="dairy">Lácteos</option><option value="fat">Grasas, nueces y semillas</option><option value="legume">Legumbres</option><option value="seasoning">Condimentos y endulzantes</option><option value="beverage">Bebidas</option><option value="other">Otros</option>
+        </select>
       </div>
 
       <button

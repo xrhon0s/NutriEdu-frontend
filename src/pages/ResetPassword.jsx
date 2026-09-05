@@ -3,6 +3,8 @@ import { useState } from "react";
 import api from "../services/api";
 import { AuthField, AuthLayout, AuthSubmitButton } from "../components/AuthLayout";
 import StatusMessage from "../components/StatusMessage";
+import PasswordRequirements from "../components/PasswordRequirements";
+import { isPasswordValid } from "../utils/passwordPolicy";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -27,6 +29,12 @@ export default function ResetPassword() {
 
     if (password !== confirmPassword) {
       setMessage("Las contraseñas no coinciden");
+      setMessageType("error");
+      return;
+    }
+
+    if (!isPasswordValid(password)) {
+      setMessage("Revisa los requisitos de la contraseña antes de continuar");
       setMessageType("error");
       return;
     }
@@ -74,9 +82,13 @@ export default function ResetPassword() {
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          minLength={6}
+          minLength={10}
+          maxLength={72}
+          aria-invalid={password.length > 0 && !isPasswordValid(password)}
           required
         />
+
+        <PasswordRequirements password={password} />
 
         <AuthField
           label="Confirmar contraseña"
@@ -86,14 +98,18 @@ export default function ResetPassword() {
           autoComplete="new-password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          minLength={6}
+          minLength={10}
+          maxLength={72}
+          aria-invalid={confirmPassword.length > 0 && password !== confirmPassword}
           required
         />
+
+        {confirmPassword ? <p className={`text-sm font-medium ${password === confirmPassword ? "text-green-700" : "text-red-700"}`} aria-live="polite">{password === confirmPassword ? "Las contraseñas coinciden." : "Las contraseñas no coinciden."}</p> : null}
 
         <AuthSubmitButton
           loading={loading}
           loadingText="Guardando..."
-          disabled={!token}
+          disabled={!token || !isPasswordValid(password) || password !== confirmPassword}
         >
           Guardar contraseña
         </AuthSubmitButton>

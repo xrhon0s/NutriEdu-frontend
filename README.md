@@ -88,6 +88,8 @@ Ruta administrativa:
 
 La pestana Operacion muestra metricas agregadas, cobertura de perfiles, presupuesto de IA y ledger de migraciones. Usuarios incorpora busqueda, filtro, paginacion, cobertura clinica y gestion protegida de roles. Catalogos clinicos permite crear, editar, activar y desactivar objetivos y condiciones. Reglas permite gestionar criterios nutricionales y restricciones sin eliminar historial. Uso de IA muestra solicitudes, tokens, costos y fallos, con la politica de limites en modo de solo lectura. Recetas e ingredientes conservan sus pestanas de gestion; todas estas operaciones requieren JWT y rol administrativo verificado en backend.
 
+Recetas publicas usan paginacion incremental. La seleccion de restricciones del perfil incorpora busqueda y paginas sin perder selecciones. En administracion, recetas, ingredientes y restricciones incluyen busqueda y paginacion de servidor; ingredientes tambien se filtran y editan por grupo alimentario.
+
 ## Flujo de autenticacion
 
 1. El usuario inicia sesion en `/login`.
@@ -107,6 +109,8 @@ El backend obtiene el usuario autenticado desde el JWT. El frontend ya no envia 
 4. El enlace apunta a `/reset-password?token=...`.
 5. El usuario escribe una nueva contrasena.
 6. El frontend envia `token` y `password` a `POST /api/users/reset-password`.
+
+Registro y restablecimiento comparten una guia visual de contrasena. Se exigen entre 10 y 72 caracteres, mayuscula, minuscula, numero y simbolo; el boton permanece deshabilitado hasta cumplir la politica y el backend vuelve a validarla.
 
 ## Paginas principales
 

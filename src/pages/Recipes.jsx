@@ -10,9 +10,10 @@ const healthRanges = {
 };
 
 export default function Recipes() {
-  const [safeRecipes, setSafeRecipes] = useState([]);
+  const [recipes, setRecipes] = useState([]);
   const [recommendedRecipes, setRecommendedRecipes] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
+  const [pagination, setPagination] = useState({ hasMore: false });
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
   // Estados de búsqueda y filtros
@@ -29,11 +30,7 @@ export default function Recipes() {
     const fetchRecipes = async () => {
       try {
         setLoading(true);
-        const [safeRes, recommendedRes] = await Promise.all([
-          api.get(`/recipes/safe/${userId}`),
-          api.get(`/recipes/recommended/${userId}`)
-        ]);
-        setSafeRecipes(safeRes.data);
+        const recommendedRes = await api.get(`/recipes/recommended/${userId}`);
         setRecommendedRecipes(recommendedRes.data);
       } catch (error) {
         console.error(error);
@@ -44,14 +41,13 @@ export default function Recipes() {
     if (userId) fetchRecipes();
   }, [userId]);
 
-  useEffect(() => {
-    const timer = window.setTimeout(async () => {
-      if (query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax) {
-        setSearchResults([]);
-        return;
-      }
+  useEffect(() => { setPage(1); }, [query, nivelFilter, caloriasMin, caloriasMax]);
 
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
       try {
+        setLoading(true);
         const healthRange = healthRanges[nivelFilter] || {};
         const res = await api.get(`/recipes/search/${userId}`, {
           params: {
@@ -60,22 +56,29 @@ export default function Recipes() {
             nivel_max: healthRange.max,
             calorias_min: caloriasMin || undefined,
             calorias_max: caloriasMax || undefined,
+            safe_only: query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax ? "true" : undefined,
+            paginated: "true",
+            limit: 12,
+            offset: (page - 1) * 12,
           },
         });
-        setSearchResults(res.data);
+        if (active) { setRecipes(res.data.recipes); setPagination(res.data.pagination); }
       } catch (err) {
         console.error(err);
+      } finally {
+        if (active) setLoading(false);
       }
     }, 300);
 
-    return () => window.clearTimeout(timer);
-  }, [userId, query, nivelFilter, caloriasMin, caloriasMax]);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [userId, query, nivelFilter, caloriasMin, caloriasMax, page]);
 
   const resetFilters = () => {
     setQuery("");
     setNivelFilter("");
     setCaloriasMin("");
     setCaloriasMax("");
+    setPage(1);
     searchInputRef.current.focus();
   };
 
@@ -136,8 +139,6 @@ export default function Recipes() {
     </div>
   );
 
-  if (loading) return <p className="text-center mt-10">Cargando recetas...</p>;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white">
       <NavBar />
@@ -175,8 +176,9 @@ export default function Recipes() {
               <h2 className="text-2xl font-bold text-gray-800 mb-1">Recetas seguras</h2>
               <p className="text-gray-600 text-sm mb-6">Compatibles con tus restricciones alimentarias.</p>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {safeRecipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
+                {loading ? <p className="text-gray-500">Cargando recetas...</p> : recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
               </div>
+              <RecipePagination page={page} hasMore={pagination.hasMore} onPage={setPage} />
             </section>
             {/* Recetas recomendadas */}
             <section>
@@ -188,15 +190,21 @@ export default function Recipes() {
             </section>
           </>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {searchResults.length === 0 ? (
+          <><div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {!loading && recipes.length === 0 ? (
               <p className="text-gray-500 col-span-3">No se encontraron recetas.</p>
+            ) : loading ? (
+              <p className="text-gray-500 col-span-3">Buscando recetas...</p>
             ) : (
-              searchResults.map((r) => <RecipeCard key={r.id} recipe={r} />)
+              recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)
             )}
-          </div>
+          </div><RecipePagination page={page} hasMore={pagination.hasMore} onPage={setPage} /></>
         )}
       </div>
     </div>
   );
+}
+
+function RecipePagination({ page, hasMore, onPage }) {
+  return <div className="mt-7 flex items-center justify-between gap-4 border-t border-green-200 pt-5"><button disabled={page <= 1} onClick={() => onPage(page - 1)} className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold disabled:opacity-40">Anterior</button><span className="text-sm font-medium text-gray-600">Página {page}</span><button disabled={!hasMore} onClick={() => onPage(page + 1)} className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold disabled:opacity-40">Siguiente</button></div>;
 }
