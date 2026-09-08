@@ -1,9 +1,32 @@
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LogOut, Menu, X } from "lucide-react";
+import Button from "./Button";
+
+const baseItems = [
+  { label: "Perfil", to: "/profile" },
+  { label: "Recetas", to: "/recipes" },
+  { label: "Planificador", to: "/planner" },
+  { label: "Compras", to: "/shopping-list" },
+];
 
 export default function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
+  const items = user?.rol === "administrador"
+    ? [...baseItems, { label: "Administración", to: "/admin/recipes" }]
+    : baseItems;
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -11,93 +34,75 @@ export default function NavBar() {
     navigate("/");
   };
 
-  const linkClass = (path) =>
-    `px-3 py-2 rounded-xl text-sm font-medium transition ${
-      location.pathname === path
-        ? "bg-green-100 text-green-700"
-        : "text-gray-600 hover:text-green-700 hover:bg-green-50"
-    }`;
-
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-green-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        {/* Logo */}
+    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-white/95 backdrop-blur">
+      <nav className="mx-auto flex min-h-16 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+        <Link to="/recipes" className="flex min-w-0 shrink-0 items-center gap-2.5" aria-label="NutriEdu, ir a recetas">
+          <img src="/logonutri.png" alt="" className="h-11 w-11 object-contain" />
+          <span className="min-w-0">
+            <span className="block text-lg font-extrabold leading-5 text-[var(--color-primary)]">NutriEdu</span>
+            <span className="hidden text-xs text-[var(--color-text-muted)] sm:block">Nutrición personalizada</span>
+          </span>
+        </Link>
+
+        <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+          {items.map((item) => <NavItem key={item.to} item={item} currentPath={location.pathname} />)}
+        </div>
+
+        <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
+          <div className="max-w-40 text-right">
+            <p className="truncate text-sm font-semibold text-[var(--color-text)]">{user?.nombre || "Usuario"}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">Sesión activa</p>
+          </div>
+          <Button variant="secondary" onClick={logout} aria-label="Cerrar sesión">
+            <LogOut aria-hidden="true" size={17} />
+            Salir
+          </Button>
+        </div>
+
         <button
           type="button"
-          onClick={() => navigate("/recipes")}
-          className="flex items-center gap-3 text-left"
-          aria-label="Ir a recetas"
+          className="ml-auto grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] lg:hidden"
+          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMenuOpen((open) => !open)}
         >
-       {/* Navbar Logo */}
-          <div className="w-16 h-16 flex items-center justify-center">
-            <img
-              src="/logonutri.png"       // Ruta desde public
-              alt="NutriEdu"
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          <div>
-            <h1 className="text-lg md:text-xl font-extrabold text-green-700 leading-none">
-              NutriEdu
-            </h1>
-            <p className="text-xs text-gray-500 hidden sm:block">
-              Nutrición personalizada
-            </p>
-          </div>
+          {menuOpen ? <X aria-hidden="true" size={22} /> : <Menu aria-hidden="true" size={22} />}
         </button>
+      </nav>
 
-        {/* Navegación */}
-        <div className="hidden md:flex items-center gap-2">
-          <button onClick={() => navigate("/profile")} className={linkClass("/profile")}>
-            Perfil
-          </button>
-
-          <button onClick={() => navigate("/recipes")} className={linkClass("/recipes")}>
-            Recetas
-          </button>
-
-          <button onClick={() => navigate("/planner")} className={linkClass("/planner")}>
-            Planificador
-          </button>
-
-          <button
-            onClick={() => navigate("/shopping-list")}
-            className={linkClass("/shopping-list")}
-          >
-            Compras
-          </button>
-
-          {/* Botón administrador solo visible para rol admin */}
-          {user?.rol === "administrador" && (
-            <button
-              onClick={() => navigate("/admin/recipes")}
-              className={linkClass("/admin/recipes")}
-            >
-              Panel Admin
-            </button>
-          )}
-        </div>
-
-        {/* Usuario y logout */}
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:block text-right">
-            <p className="text-sm font-semibold text-gray-800">
-              {user?.nombre || "Usuario"}
-            </p>
-            <p className="text-xs text-gray-500">
-              Sesión activa
-            </p>
+      {menuOpen ? (
+        <div id="mobile-navigation" className="border-t border-[var(--color-border)] bg-white px-4 py-3 lg:hidden">
+          <div className="mx-auto grid max-w-7xl gap-1">
+            {items.map((item) => <NavItem key={item.to} item={item} currentPath={location.pathname} mobile onNavigate={() => setMenuOpen(false)} />)}
+            <div className="mt-2 flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-[var(--color-text)]">{user?.nombre || "Usuario"}</p>
+                <p className="text-xs text-[var(--color-text-muted)]">Sesión activa</p>
+              </div>
+              <Button variant="secondary" onClick={logout}>
+                <LogOut aria-hidden="true" size={17} />
+                Cerrar sesión
+              </Button>
+            </div>
           </div>
-
-          <button
-            onClick={logout}
-            className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition text-sm font-medium"
-          >
-            Cerrar sesión
-          </button>
         </div>
-      </div>
-    </nav>
+      ) : null}
+    </header>
+  );
+}
+
+function NavItem({ item, currentPath, mobile = false, onNavigate }) {
+  const active = currentPath === item.to || currentPath.startsWith(`${item.to}/`);
+  return (
+    <Link
+      to={item.to}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={`${mobile ? "min-h-11 w-full justify-start px-3" : "min-h-10 px-3"} inline-flex items-center rounded-lg text-sm font-semibold transition-colors ${active ? "bg-[var(--color-primary-soft)] text-[var(--color-primary-hover)]" : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"}`}
+    >
+      {item.label}
+    </Link>
   );
 }

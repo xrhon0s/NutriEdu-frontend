@@ -90,6 +90,8 @@ La pestana Operacion muestra metricas agregadas, cobertura de perfiles, presupue
 
 Recetas publicas usan paginacion incremental. La vista inicial muestra seis recomendaciones ordenadas por el perfil, equivalentes a dos filas de tres tarjetas en escritorio; las busquedas mantienen paginas de 12 resultados. Cada recomendacion muestra afinidad, una razon principal y avisa cuando faltan datos nutricionales. La seleccion de restricciones del perfil incorpora busqueda y paginas sin perder selecciones. En administracion, recetas, ingredientes y restricciones incluyen busqueda y paginacion de servidor; ingredientes tambien se filtran y editan por grupo alimentario.
 
+La base UI web usa tokens semanticos en `index.css` y componentes compartidos para shell, encabezados, botones, paginacion, mensajes y estados vacios. La navegacion autenticada ofrece menu responsive accesible hasta 1024 px. Recetas usa filtros etiquetados, tarjetas compactas con iconos Lucide, skeletons y reintento explicito de recomendaciones.
+
 Los campos de contrasena compartidos incluyen controles accesibles para mostrar u ocultar su contenido. El logo de la navegacion autenticada vuelve a `/recipes` y nunca elimina la sesion; solo `Cerrar sesion` borra el token y el usuario almacenados.
 
 El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina. Tambien captura nutrientes por porcion, tamano de porcion, numero de porciones y procedencia. La migracion backend `010_recipe_nutrition_provenance.sql` requerida por estos campos esta aplicada y verificada en Supabase.
