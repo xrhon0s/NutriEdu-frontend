@@ -4,6 +4,8 @@ import IngredientList from "./Ingredients/IngredientList";
 import OperationsOverview from "./OperationsOverview";
 import RecipeForm from "./Recipes/RecipeForm";
 import RecipeList from "./Recipes/RecipeList";
+import RecipeImport from "./Recipes/RecipeImport";
+import { FileUp, Plus } from "lucide-react";
 import NavBar from "../../components/navBar";
 import UsersAdmin from "./UsersAdmin";
 import ClinicalCatalogs from "./ClinicalCatalogs";
@@ -67,12 +69,17 @@ export default function AdminDashboard() {
               <>
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <h2 className="text-lg font-bold text-gray-900">Catalogo de recetas</h2>
-                  <button className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700" onClick={() => { setSelectedRecipe(null); setView("form"); }}>Crear receta</button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50" onClick={() => setView("import")}><FileUp size={18} /> Importar</button>
+                    <button className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-green-600 px-4 text-sm font-semibold text-white hover:bg-green-700" onClick={() => { setSelectedRecipe(null); setView("form"); }}><Plus size={18} /> Crear receta</button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto"><RecipeList onEdit={(recipe) => { setSelectedRecipe(recipe); setView("form"); }} /></div>
               </>
-            ) : (
+            ) : view === "form" ? (
               <><BackButton onPress={() => setView("list")} /><RecipeForm recipe={selectedRecipe} onFinish={() => setView("list")} /></>
+            ) : (
+              <><BackButton onPress={() => setView("list")} /><RecipeImport /></>
             )}
           </section>
         ) : null}

@@ -94,6 +94,8 @@ Los campos de contrasena compartidos incluyen controles accesibles para mostrar 
 
 El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina. Tambien captura nutrientes por porcion, tamano de porcion, numero de porciones y procedencia; estos campos requieren la migracion backend `010_recipe_nutrition_provenance.sql`.
 
+La vista de recetas administrativas incorpora importacion JSON en dos pasos. Primero descarga o selecciona `example.catalog.json` y solicita una vista previa con conteos, errores y advertencias. El boton de importacion solo se habilita si el backend aprueba la previsualizacion y exige confirmacion antes de escribir. Requiere las migraciones backend `010` y `011`.
+
 ## Flujo de autenticacion
 
 1. El usuario inicia sesion en `/login`.
