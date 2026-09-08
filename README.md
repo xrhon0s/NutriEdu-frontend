@@ -88,11 +88,11 @@ Ruta administrativa:
 
 La pestana Operacion muestra metricas agregadas, cobertura de perfiles, presupuesto de IA y ledger de migraciones. Usuarios incorpora busqueda, filtro, paginacion, cobertura clinica y gestion protegida de roles. Catalogos clinicos permite crear, editar, activar y desactivar objetivos y condiciones. Reglas permite gestionar criterios nutricionales y restricciones sin eliminar historial. Uso de IA muestra solicitudes, tokens, costos y fallos, con la politica de limites en modo de solo lectura. Recetas e ingredientes conservan sus pestanas de gestion; todas estas operaciones requieren JWT y rol administrativo verificado en backend.
 
-Recetas publicas usan paginacion incremental. La vista inicial muestra seis recetas seguras por pagina, equivalentes a dos filas de tres tarjetas en escritorio; las busquedas mantienen paginas de 12 resultados. La seleccion de restricciones del perfil incorpora busqueda y paginas sin perder selecciones. En administracion, recetas, ingredientes y restricciones incluyen busqueda y paginacion de servidor; ingredientes tambien se filtran y editan por grupo alimentario.
+Recetas publicas usan paginacion incremental. La vista inicial muestra seis recomendaciones ordenadas por el perfil, equivalentes a dos filas de tres tarjetas en escritorio; las busquedas mantienen paginas de 12 resultados. Cada recomendacion muestra afinidad, una razon principal y avisa cuando faltan datos nutricionales. La seleccion de restricciones del perfil incorpora busqueda y paginas sin perder selecciones. En administracion, recetas, ingredientes y restricciones incluyen busqueda y paginacion de servidor; ingredientes tambien se filtran y editan por grupo alimentario.
 
 Los campos de contrasena compartidos incluyen controles accesibles para mostrar u ocultar su contenido. El logo de la navegacion autenticada vuelve a `/recipes` y nunca elimina la sesion; solo `Cerrar sesion` borra el token y el usuario almacenados.
 
-El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina.
+El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina. Tambien captura nutrientes por porcion, tamano de porcion, numero de porciones y procedencia; estos campos requieren la migracion backend `010_recipe_nutrition_provenance.sql`.
 
 ## Flujo de autenticacion
 

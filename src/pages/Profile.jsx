@@ -43,18 +43,18 @@ const initialTargets = {
 };
 
 const targetFields = [
-  ["calories_min", "Calorias minimas", "kcal"],
-  ["calories_max", "Calorias maximas", "kcal"],
-  ["protein_min_g", "Proteina minima", "g"],
-  ["protein_max_g", "Proteina maxima", "g"],
-  ["carbs_min_g", "Carbohidratos minimos", "g"],
-  ["carbs_max_g", "Carbohidratos maximos", "g"],
-  ["fat_min_g", "Grasas minimas", "g"],
-  ["fat_max_g", "Grasas maximas", "g"],
-  ["saturated_fat_max_g", "Grasa saturada maxima", "g"],
-  ["sugar_max_g", "Azucar maxima", "g"],
-  ["fiber_min_g", "Fibra minima", "g"],
-  ["sodium_max_mg", "Sodio maximo", "mg"],
+  ["calories_min", "Calorias minimas diarias", "kcal"],
+  ["calories_max", "Calorias maximas diarias", "kcal"],
+  ["protein_min_g", "Proteina minima diaria", "g"],
+  ["protein_max_g", "Proteina maxima diaria", "g"],
+  ["carbs_min_g", "Carbohidratos minimos diarios", "g"],
+  ["carbs_max_g", "Carbohidratos maximos diarios", "g"],
+  ["fat_min_g", "Grasas minimas diarias", "g"],
+  ["fat_max_g", "Grasas maximas diarias", "g"],
+  ["saturated_fat_max_g", "Grasa saturada maxima diaria", "g"],
+  ["sugar_max_g", "Azucar maxima diaria", "g"],
+  ["fiber_min_g", "Fibra minima diaria", "g"],
+  ["sodium_max_mg", "Sodio maximo diario", "mg"],
   ["water_min_ml", "Agua minima diaria", "ml"]
 ];
 
@@ -299,7 +299,7 @@ export default function Profile() {
 
         {activeTab === "targets" && (
           <div role="tabpanel">
-            <SectionTitle title="Metas y limites por comida" text="Usa valores indicados por un profesional. Los campos vacios no generan alertas." />
+            <SectionTitle title="Metas y limites diarios" text="El motor los distribuye entre tus comidas. Usa valores indicados por un profesional; los campos vacios no generan alertas." />
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {targetFields.map(([name, label, unit]) => <NumberField key={name} label={label} name={name} value={targets[name]} unit={unit} onChange={changeTarget} />)}
             </div>

@@ -2,6 +2,16 @@
 import { useEffect, useState } from "react";
 import api from "../../../services/api";
 
+const nutrientFields = [
+  ["protein_g", "Proteína", "g"],
+  ["carbs_g", "Carbohidratos", "g"],
+  ["fat_g", "Grasas", "g"],
+  ["saturated_fat_g", "Grasa saturada", "g"],
+  ["sugar_g", "Azúcar", "g"],
+  ["fiber_g", "Fibra", "g"],
+  ["sodium_mg", "Sodio", "mg"]
+];
+
 export default function RecipeForm({ recipe, onFinish }) {
   // Si recipe es null => estamos creando, si tiene datos => editando
   const isEditing = !!recipe;
@@ -10,6 +20,19 @@ export default function RecipeForm({ recipe, onFinish }) {
   const [descripcion, setDescripcion] = useState(recipe?.descripcion || "");
   const [calorias, setCalorias] = useState(recipe?.calorias || "");
   const [tiempo, setTiempo] = useState(recipe?.tiempo_preparacion || "");
+  const [nutrition, setNutrition] = useState({
+    nivel_salud: recipe?.nivel_salud || 3,
+    protein_g: recipe?.protein_g ?? "",
+    carbs_g: recipe?.carbs_g ?? "",
+    fat_g: recipe?.fat_g ?? "",
+    saturated_fat_g: recipe?.saturated_fat_g ?? "",
+    sugar_g: recipe?.sugar_g ?? "",
+    fiber_g: recipe?.fiber_g ?? "",
+    sodium_mg: recipe?.sodium_mg ?? "",
+    serving_size_g: recipe?.serving_size_g ?? "",
+    servings: recipe?.servings ?? 1,
+    nutrition_source: recipe?.nutrition_source || "unknown"
+  });
   const [ingredients, setIngredients] = useState([]);
   const [ingredientPage, setIngredientPage] = useState(1);
   const [ingredientPagination, setIngredientPagination] = useState({ page: 1, totalPages: 1, total: 0 });
@@ -53,6 +76,7 @@ export default function RecipeForm({ recipe, onFinish }) {
       descripcion,
       calorias,
       tiempo_preparacion: tiempo,
+      ...nutrition,
       ingredients: selectedIngredients.map(Number)
     };
 
@@ -118,6 +142,37 @@ export default function RecipeForm({ recipe, onFinish }) {
           required
         />
       </div>
+
+      <fieldset className="border-y border-gray-200 py-5">
+        <legend className="px-2 text-base font-semibold text-gray-900">Nutrición por porción</legend>
+        <p className="mb-4 text-sm text-gray-500">Registra únicamente valores revisados e indica su procedencia. Los campos vacíos reducen la confianza de la recomendación.</p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="text-sm font-medium text-gray-700">Nivel de salud
+            <input type="number" min="1" max="5" step="1" value={nutrition.nivel_salud} onChange={(event) => setNutrition((current) => ({ ...current, nivel_salud: event.target.value }))} className="mt-1 w-full rounded-lg border p-3" required />
+          </label>
+          <label className="text-sm font-medium text-gray-700">Tamaño de porción
+            <span className="relative block"><input type="number" min="0.01" step="0.01" value={nutrition.serving_size_g} onChange={(event) => setNutrition((current) => ({ ...current, serving_size_g: event.target.value }))} className="mt-1 w-full rounded-lg border p-3 pr-10" /><span className="pointer-events-none absolute inset-y-0 right-3 top-1 flex items-center text-xs text-gray-400">g</span></span>
+          </label>
+          <label className="text-sm font-medium text-gray-700">Porciones de la preparación
+            <input type="number" min="0.01" step="0.01" value={nutrition.servings} onChange={(event) => setNutrition((current) => ({ ...current, servings: event.target.value }))} className="mt-1 w-full rounded-lg border p-3" required />
+          </label>
+          {nutrientFields.map(([field, label, unit]) => (
+            <label key={field} className="text-sm font-medium text-gray-700">{label}
+              <span className="relative block"><input type="number" min="0" step="0.01" value={nutrition[field]} onChange={(event) => setNutrition((current) => ({ ...current, [field]: event.target.value }))} className="mt-1 w-full rounded-lg border p-3 pr-10" /><span className="pointer-events-none absolute inset-y-0 right-3 top-1 flex items-center text-xs text-gray-400">{unit}</span></span>
+            </label>
+          ))}
+          <label className="text-sm font-medium text-gray-700">Fuente nutricional
+            <select value={nutrition.nutrition_source} onChange={(event) => setNutrition((current) => ({ ...current, nutrition_source: event.target.value }))} className="mt-1 w-full rounded-lg border bg-white p-3">
+              <option value="unknown">Sin verificar</option>
+              <option value="manual">Carga manual revisada</option>
+              <option value="usda_fdc">USDA FoodData Central</option>
+              <option value="calculated">Calculada por ingredientes</option>
+              <option value="ai_estimate">Estimación de IA</option>
+              <option value="professional">Profesional de nutrición</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
 
       <div>
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">

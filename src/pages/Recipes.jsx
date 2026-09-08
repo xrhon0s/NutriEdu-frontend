@@ -15,6 +15,9 @@ const SEARCH_RESULTS_PAGE_SIZE = 12;
 export default function Recipes() {
   const [recipes, setRecipes] = useState([]);
   const [recommendedRecipes, setRecommendedRecipes] = useState([]);
+  const [recommendationContext, setRecommendationContext] = useState(null);
+  const [recommendedLoading, setRecommendedLoading] = useState(true);
+  const [recommendedError, setRecommendedError] = useState("");
   const [pagination, setPagination] = useState({ hasMore: false });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -32,13 +35,16 @@ export default function Recipes() {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        setLoading(true);
-        const recommendedRes = await api.get(`/recipes/recommended/${userId}`);
-        setRecommendedRecipes(recommendedRes.data);
+        setRecommendedLoading(true);
+        setRecommendedError("");
+        const recommendedRes = await api.get("/recipes/recommendations", { params: { limit: 6, offset: 0 } });
+        setRecommendedRecipes(recommendedRes.data.recipes || []);
+        setRecommendationContext(recommendedRes.data.profileContext || null);
       } catch (error) {
         console.error(error);
+        setRecommendedError(error.response?.data?.error || "No pudimos calcular tus recomendaciones.");
       } finally {
-        setLoading(false);
+        setRecommendedLoading(false);
       }
     };
     if (userId) fetchRecipes();
@@ -100,21 +106,31 @@ export default function Recipes() {
   };
 
   const RecipeCard = ({ recipe }) => (
-    <div
+    <button
+      type="button"
       className={`bg-white rounded-3xl shadow-md p-6 border transition cursor-pointer hover:shadow-xl hover:-translate-y-1
-        ${recipe.hasUnsafeIngredients ? "border-red-300 bg-red-50" : "border-green-100"}`}
+        w-full text-left ${recipe.hasUnsafeIngredients ? "border-red-300 bg-red-50" : "border-green-100"}`}
       onClick={() => navigate(`/recipes/${recipe.id}`)}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${recipe.hasUnsafeIngredients ? "bg-red-100" : "bg-green-100"}`}>
           {recipe.hasUnsafeIngredients ? "⚠️" : "🥗"}
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getHealthColor(recipe.nivel_salud)}`}>
-          {getHealthLabel(recipe.nivel_salud)}
-        </span>
+        <div className="flex flex-wrap justify-end gap-2">
+          {recipe.recommendation ? <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Afinidad {recipe.recommendation.score}/100</span> : null}
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getHealthColor(recipe.nivel_salud)}`}>
+            {getHealthLabel(recipe.nivel_salud)}
+          </span>
+        </div>
       </div>
       <h2 className="text-xl font-bold text-gray-800 mb-2">{recipe.nombre}</h2>
       <p className="text-gray-600 text-sm mb-5 min-h-[60px]">{recipe.descripcion}</p>
+      {recipe.recommendation ? (
+        <div className="mb-5 min-h-16 border-l-2 border-blue-300 pl-3 text-sm text-gray-600">
+          <p>{recipe.recommendation.reasons[0] || "Compatible con la información disponible de tu perfil."}</p>
+          {recipe.recommendation.confidence < 0.5 ? <p className="mt-1 font-medium text-amber-700">Datos nutricionales limitados</p> : null}
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-green-50 rounded-2xl p-3">
           <p className="text-xs text-gray-500">Calorías</p>
@@ -141,7 +157,7 @@ export default function Recipes() {
         )}
         <span className="text-green-700 font-semibold text-sm">Ver más</span>
       </div>
-    </div>
+    </button>
   );
 
   return (
@@ -188,9 +204,11 @@ export default function Recipes() {
             {/* Recetas recomendadas */}
             <section>
               <h2 className="text-2xl font-bold text-gray-800 mb-1">Recomendadas para ti</h2>
-              <p className="text-gray-600 text-sm mb-6">Seleccionadas según tu perfil y nivel de salud.</p>
+              <p className="text-gray-600 text-sm mb-6">Ordenadas según restricciones, objetivos, condiciones, metas y preferencias disponibles.</p>
+              {recommendationContext?.clinicalReviewRequired ? <p className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Tu perfil contiene condiciones o límites que requieren acompañamiento profesional. El puntaje es informativo.</p> : null}
+              {recommendedError ? <p className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{recommendedError}</p> : null}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recommendedRecipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
+                {recommendedLoading ? <p className="text-gray-500">Calculando recomendaciones...</p> : recommendedRecipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
               </div>
             </section>
           </>
