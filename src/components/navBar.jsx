@@ -22,9 +22,11 @@ export default function NavBar() {
     <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-green-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          className="flex items-center gap-3 cursor-pointer"
+        <button
+          type="button"
+          onClick={() => navigate("/recipes")}
+          className="flex items-center gap-3 text-left"
+          aria-label="Ir a recetas"
         >
        {/* Navbar Logo */}
           <div className="w-16 h-16 flex items-center justify-center">
@@ -43,7 +45,7 @@ export default function NavBar() {
               Nutrición personalizada
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Navegación */}
         <div className="hidden md:flex items-center gap-2">

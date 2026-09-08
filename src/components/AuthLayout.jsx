@@ -1,4 +1,6 @@
+import { useId, useState } from "react";
 import { Link } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 export function AuthLayout({ title, subtitle, children, footer }) {
   return (
@@ -71,16 +73,37 @@ export function AuthLayout({ title, subtitle, children, footer }) {
   );
 }
 
-export function AuthField({ label, className = "", ...props }) {
+export function AuthField({ label, className = "", id, type = "text", ...props }) {
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const isPassword = type === "password";
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
   return (
     <div className={className}>
-      <label className="text-sm font-semibold text-slate-700">
+      <label htmlFor={inputId} className="text-sm font-semibold text-slate-700">
         {label}
       </label>
-      <input
-        {...props}
-        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-4 focus:ring-green-100"
-      />
+      <div className="relative mt-2">
+        <input
+          {...props}
+          id={inputId}
+          type={isPassword && passwordVisible ? "text" : type}
+          className={`w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-4 focus:ring-green-100 ${isPassword ? "pr-12" : ""}`}
+        />
+        {isPassword ? (
+          <button
+            type="button"
+            onClick={() => setPasswordVisible((visible) => !visible)}
+            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-500"
+            aria-label={passwordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
+            aria-pressed={passwordVisible}
+            title={passwordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {passwordVisible ? <EyeOff aria-hidden="true" size={20} /> : <Eye aria-hidden="true" size={20} />}
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

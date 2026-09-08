@@ -9,6 +9,9 @@ const healthRanges = {
   moderada: { max: 2 },
 };
 
+const SAFE_RECIPES_PAGE_SIZE = 6;
+const SEARCH_RESULTS_PAGE_SIZE = 12;
+
 export default function Recipes() {
   const [recipes, setRecipes] = useState([]);
   const [recommendedRecipes, setRecommendedRecipes] = useState([]);
@@ -49,6 +52,8 @@ export default function Recipes() {
       try {
         setLoading(true);
         const healthRange = healthRanges[nivelFilter] || {};
+        const isSafeRecipesView = query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax;
+        const pageSize = isSafeRecipesView ? SAFE_RECIPES_PAGE_SIZE : SEARCH_RESULTS_PAGE_SIZE;
         const res = await api.get(`/recipes/search/${userId}`, {
           params: {
             query: query || undefined,
@@ -56,10 +61,10 @@ export default function Recipes() {
             nivel_max: healthRange.max,
             calorias_min: caloriasMin || undefined,
             calorias_max: caloriasMax || undefined,
-            safe_only: query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax ? "true" : undefined,
+            safe_only: isSafeRecipesView ? "true" : undefined,
             paginated: "true",
-            limit: 12,
-            offset: (page - 1) * 12,
+            limit: pageSize,
+            offset: (page - 1) * pageSize,
           },
         });
         if (active) { setRecipes(res.data.recipes); setPagination(res.data.pagination); }
