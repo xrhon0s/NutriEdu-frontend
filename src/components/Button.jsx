@@ -3,6 +3,7 @@ const variants = {
   secondary: "border-[var(--color-border)] bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]",
   ghost: "border-transparent bg-transparent text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]",
   danger: "border-transparent bg-red-600 text-white hover:bg-red-700",
+  warning: "border-transparent bg-amber-600 text-white hover:bg-amber-700",
 };
 
 const sizes = {
