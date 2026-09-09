@@ -92,7 +92,7 @@ Recetas publicas usan paginacion incremental. La vista inicial muestra seis reco
 
 La base UI web usa tokens semanticos en `index.css` y componentes compartidos para shell, encabezados, botones, paginacion, mensajes y estados vacios. La navegacion autenticada ofrece menu responsive accesible hasta 1024 px. Recetas usa filtros etiquetados, tarjetas compactas con iconos Lucide, skeletons y reintento explicito de recomendaciones.
 
-El detalle de receta separa compatibilidad, descripcion, datos por porcion e ingredientes reales. Consulta en paralelo la receta, sus ingredientes y la seguridad del usuario; muestra los nutrientes ausentes como pendientes y ofrece reintento ante errores. El modal de alternativas es informativo: cerrar o revisar una alternativa no modifica la receta ni elimina su alerta.
+El detalle de receta separa compatibilidad, descripcion, datos por porcion e ingredientes reales. Consulta en paralelo la receta, sus ingredientes y la seguridad del usuario; muestra los nutrientes ausentes como pendientes y ofrece reintento ante errores. El modal de alternativas es informativo: cerrar o revisar una alternativa no modifica la receta ni elimina su alerta. El backend solo devuelve opciones seguras con la misma funcion culinaria; cuando no existe una alternativa cercana, la interfaz lo indica sin mostrar ingredientes arbitrarios.
 
 El planificador presenta 21 espacios semanales, selector compacto, progreso y estado de guardado. Los espacios vacios llevan el dia y la comida al formulario, y cualquier cambio local se identifica como pendiente hasta recibir confirmacion del backend. Si una receta previamente guardada deja de ser compatible por cambios en el perfil, debe retirarse antes de guardar; las sustituciones todavia no se persisten en el modelo de datos.
 
@@ -102,7 +102,7 @@ Los campos de contrasena compartidos incluyen controles accesibles para mostrar 
 
 El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina. Tambien captura nutrientes por porcion, tamano de porcion, numero de porciones y procedencia. La migracion backend `010_recipe_nutrition_provenance.sql` requerida por estos campos esta aplicada y verificada en Supabase.
 
-La vista de recetas administrativas incorpora importacion JSON en dos pasos. Primero descarga o selecciona `example.catalog.json` y solicita una vista previa con conteos, errores y advertencias. El boton de importacion solo se habilita si el backend aprueba la previsualizacion y exige confirmacion antes de escribir. Las migraciones backend `010` y `011` requeridas por este flujo estan aplicadas y verificadas en Supabase.
+La vista de recetas administrativas incorpora importacion JSON en dos pasos. Primero descarga o selecciona `example.catalog.json` y solicita una vista previa con conteos, errores y advertencias. El boton de importacion solo se habilita si el backend aprueba la previsualizacion y exige confirmacion antes de escribir. Ingredientes permite asignar y filtrar tanto el grupo alimentario como el grupo de sustitucion culinaria. Las migraciones backend `010`, `011` y `012` requeridas por este flujo estan aplicadas y verificadas en Supabase.
 
 ## Flujo de autenticacion
 

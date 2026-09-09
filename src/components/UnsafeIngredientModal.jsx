@@ -97,7 +97,7 @@ export default function UnsafeIngredientModal({
                       {options.map((option) => <li key={option.id} className="rounded-md bg-[var(--color-surface-muted)] px-3 py-2 text-sm text-[var(--color-text)]">{option.nombre}</li>)}
                     </ul>
                   ) : (
-                    <p className="mt-2 text-sm text-amber-800">No hay alternativas registradas.</p>
+                    <p className="mt-2 text-sm text-amber-800">No hay alternativas seguras suficientemente cercanas en el catálogo.</p>
                   )}
                 </div>
               );
