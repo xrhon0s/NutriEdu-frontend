@@ -16,7 +16,7 @@ export default function ForgotPassword() {
 
     try {
       setLoading(true);
-      const res = await api.post("/users/forgot-password", { email });
+      const res = await api.post("/users/forgot-password", { email: email.trim().toLowerCase() });
 
       setMessage(res.data.message);
       setMessageType("success");
@@ -54,6 +54,7 @@ export default function ForgotPassword() {
           name="email"
           placeholder="correo@email.com"
           autoComplete="email"
+          inputMode="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

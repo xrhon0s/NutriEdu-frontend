@@ -98,7 +98,7 @@ El planificador presenta 21 espacios semanales, selector compacto, progreso y es
 
 El perfil de salud se divide en datos personales, objetivos, salud/restricciones y metas nutricionales. Un resumen cuantifica el contexto disponible; los objetivos muestran su prioridad real, las restricciones conservan busqueda y paginacion, y los 13 limites diarios se agrupan en energia, macronutrientes y limites especificos. Cada seccion mantiene su guardado independiente y la carga ofrece skeleton, error y reintento.
 
-Los campos de contrasena compartidos incluyen controles accesibles para mostrar u ocultar su contenido. El logo de la navegacion autenticada vuelve a `/recipes` y nunca elimina la sesion; solo `Cerrar sesion` borra el token y el usuario almacenados.
+Login, registro y recuperacion comparten un layout sobrio, campos etiquetados, progreso de envio y mensajes semanticos. Los campos de contrasena incluyen controles accesibles para mostrar u ocultar su contenido; registro y restablecimiento exigen confirmacion coincidente. Un enlace de recuperacion sin token valido no muestra el formulario, y un fallo al consultar el perfil despues de autenticar ya no se presenta como un login fallido. El logo de la navegacion autenticada vuelve a `/recipes` y nunca elimina la sesion; solo `Cerrar sesion` borra el token y el usuario almacenados.
 
 El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina. Tambien captura nutrientes por porcion, tamano de porcion, numero de porciones y procedencia. La migracion backend `010_recipe_nutrition_provenance.sql` requerida por estos campos esta aplicada y verificada en Supabase.
 
@@ -124,7 +124,7 @@ El backend obtiene el usuario autenticado desde el JWT. El frontend ya no envia 
 5. El usuario escribe una nueva contrasena.
 6. El frontend envia `token` y `password` a `POST /api/users/reset-password`.
 
-Registro y restablecimiento comparten una guia visual de contrasena. Se exigen entre 10 y 72 caracteres, mayuscula, minuscula, numero y simbolo; el boton permanece deshabilitado hasta cumplir la politica y el backend vuelve a validarla.
+Registro y restablecimiento comparten una guia visual y confirmacion de contrasena. Se exigen entre 10 y 72 caracteres, mayuscula, minuscula, numero y simbolo; el boton permanece deshabilitado hasta cumplir la politica, ambas entradas deben coincidir y el backend vuelve a validar la credencial autoritativamente.
 
 ## Paginas principales
 

@@ -9,18 +9,18 @@ const requirements = [
   ["symbol", "Un símbolo, por ejemplo ! @ # $"],
 ];
 
-export default function PasswordRequirements({ password }) {
+export default function PasswordRequirements({ password, id = "password-requirements" }) {
   const checks = passwordChecks(password);
   const complete = password.length > 0 && Object.values(checks).every(Boolean);
 
   return (
-    <div className={`rounded-lg border p-3 text-sm ${complete ? "border-green-200 bg-green-50" : "border-slate-200 bg-slate-50"}`} aria-live="polite">
+    <div id={id} className={`rounded-lg border p-3 text-sm ${complete ? "border-green-200 bg-green-50" : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"}`} aria-live="polite">
       <p className={`font-semibold ${complete ? "text-green-700" : "text-slate-700"}`}>
         {complete ? "La contraseña cumple todos los requisitos." : "Tu contraseña debe incluir:"}
       </p>
       <ul className="mt-2 grid gap-1 sm:grid-cols-2">
         {requirements.map(([key, label]) => (
-          <li key={key} className={checks[key] ? "text-green-700" : "text-slate-500"}>
+          <li key={key} className={checks[key] ? "text-green-700" : "text-[var(--color-text-muted)]"}>
             <span aria-hidden="true" className="mr-2 font-bold">{checks[key] ? "✓" : "○"}</span>{label}
           </li>
         ))}

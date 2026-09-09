@@ -73,6 +73,14 @@ export default function ResetPassword() {
     >
       <StatusMessage message={message} type={messageType} />
 
+      {!token ? (
+        <div className="space-y-5">
+          <StatusMessage message="Este enlace no contiene un token de recuperación válido. Solicita uno nuevo." type="error" />
+          <Link to="/forgot-password" className="flex min-h-12 items-center justify-center rounded-lg border border-[var(--color-border)] px-4 py-3 font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)]">
+            Solicitar otro enlace
+          </Link>
+        </div>
+      ) : (
       <form onSubmit={resetPassword} className="space-y-5">
         <AuthField
           label="Nueva contraseña"
@@ -85,10 +93,11 @@ export default function ResetPassword() {
           minLength={10}
           maxLength={72}
           aria-invalid={password.length > 0 && !isPasswordValid(password)}
+          aria-describedby="reset-password-requirements"
           required
         />
 
-        <PasswordRequirements password={password} />
+        <PasswordRequirements password={password} id="reset-password-requirements" />
 
         <AuthField
           label="Confirmar contraseña"
@@ -100,11 +109,10 @@ export default function ResetPassword() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           minLength={10}
           maxLength={72}
-          aria-invalid={confirmPassword.length > 0 && password !== confirmPassword}
+          error={confirmPassword && password !== confirmPassword ? "Las contraseñas no coinciden." : ""}
+          hint={confirmPassword && password === confirmPassword ? "Las contraseñas coinciden." : ""}
           required
         />
-
-        {confirmPassword ? <p className={`text-sm font-medium ${password === confirmPassword ? "text-green-700" : "text-red-700"}`} aria-live="polite">{password === confirmPassword ? "Las contraseñas coinciden." : "Las contraseñas no coinciden."}</p> : null}
 
         <AuthSubmitButton
           loading={loading}
@@ -114,6 +122,7 @@ export default function ResetPassword() {
           Guardar contraseña
         </AuthSubmitButton>
       </form>
+      )}
     </AuthLayout>
   );
 }
