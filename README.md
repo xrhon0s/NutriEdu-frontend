@@ -96,6 +96,8 @@ El detalle de receta separa compatibilidad, descripcion, datos por porcion e ing
 
 El planificador presenta 21 espacios semanales, selector compacto, progreso y estado de guardado. Los espacios vacios llevan el dia y la comida al formulario, y cualquier cambio local se identifica como pendiente hasta recibir confirmacion del backend. Si una receta previamente guardada deja de ser compatible por cambios en el perfil, debe retirarse antes de guardar; las sustituciones todavia no se persisten en el modelo de datos.
 
+El perfil de salud se divide en datos personales, objetivos, salud/restricciones y metas nutricionales. Un resumen cuantifica el contexto disponible; los objetivos muestran su prioridad real, las restricciones conservan busqueda y paginacion, y los 13 limites diarios se agrupan en energia, macronutrientes y limites especificos. Cada seccion mantiene su guardado independiente y la carga ofrece skeleton, error y reintento.
+
 Los campos de contrasena compartidos incluyen controles accesibles para mostrar u ocultar su contenido. El logo de la navegacion autenticada vuelve a `/recipes` y nunca elimina la sesion; solo `Cerrar sesion` borra el token y el usuario almacenados.
 
 El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina. Tambien captura nutrientes por porcion, tamano de porcion, numero de porciones y procedencia. La migracion backend `010_recipe_nutrition_provenance.sql` requerida por estos campos esta aplicada y verificada en Supabase.
@@ -147,7 +149,7 @@ Registro y restablecimiento comparten una guia visual de contrasena. Se exigen e
 - `StatusMessage`: mensajes de exito/error.
 - `Button`: acciones primarias, secundarias y de riesgo.
 - `PageHeader`: titulo, contexto y acciones de pagina.
-- `Pagination`: navegacion paginada accesible.
+- `Pagination`: navegacion paginada accesible, incremental o con total de paginas.
 - `LoadingScreen`: pantalla de carga.
 - `EmptyState`: estado vacio reutilizable.
 - `ConfirmModal`: confirmaciones.
