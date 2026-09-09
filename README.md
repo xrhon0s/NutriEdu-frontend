@@ -92,6 +92,8 @@ Recetas publicas usan paginacion incremental. La vista inicial muestra seis reco
 
 La base UI web usa tokens semanticos en `index.css` y componentes compartidos para shell, encabezados, botones, paginacion, mensajes y estados vacios. La navegacion autenticada ofrece menu responsive accesible hasta 1024 px. Recetas usa filtros etiquetados, tarjetas compactas con iconos Lucide, skeletons y reintento explicito de recomendaciones.
 
+El detalle de receta separa compatibilidad, descripcion, datos por porcion e ingredientes reales. Consulta en paralelo la receta, sus ingredientes y la seguridad del usuario; muestra los nutrientes ausentes como pendientes y ofrece reintento ante errores. El modal de alternativas funciona como consulta desde el detalle y como selector obligatorio desde el planificador, sin considerar resuelta una alerta cuando el usuario solo cierra el modal.
+
 Los campos de contrasena compartidos incluyen controles accesibles para mostrar u ocultar su contenido. El logo de la navegacion autenticada vuelve a `/recipes` y nunca elimina la sesion; solo `Cerrar sesion` borra el token y el usuario almacenados.
 
 El formulario administrativo de recetas consulta ingredientes en paginas de 12, permite buscarlos y conserva los IDs seleccionados al cambiar de pagina. Tambien captura nutrientes por porcion, tamano de porcion, numero de porciones y procedencia. La migracion backend `010_recipe_nutrition_provenance.sql` requerida por estos campos esta aplicada y verificada en Supabase.
@@ -141,6 +143,9 @@ Registro y restablecimiento comparten una guia visual de contrasena. Se exigen e
 - `AuthLayout`: layout reutilizable para login, registro y recuperacion de contrasena.
 - `ProtectedRoute`: proteccion de rutas privadas.
 - `StatusMessage`: mensajes de exito/error.
+- `Button`: acciones primarias, secundarias y de riesgo.
+- `PageHeader`: titulo, contexto y acciones de pagina.
+- `Pagination`: navegacion paginada accesible.
 - `LoadingScreen`: pantalla de carga.
 - `EmptyState`: estado vacio reutilizable.
 - `ConfirmModal`: confirmaciones.
@@ -162,7 +167,7 @@ npm run lint
 npm run build
 ```
 
-Actualmente `lint` puede mostrar advertencias de hooks en algunas paginas existentes, pero no bloquea el build.
+La verificacion actual exige que `lint` termine sin errores ni advertencias y que el build de produccion finalice correctamente.
 
 ## Despliegue en Vercel
 

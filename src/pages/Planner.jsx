@@ -320,7 +320,8 @@ export default function Planner() {
       {/* Modal */}
       <UnsafeIngredientModal
         isOpen={modalData.isOpen}
-        onClose={handleModalClose}
+        onClose={() => setModalData({ isOpen: false, item: null })}
+        onConfirm={handleModalClose}
         unsafeIngredients={modalData.item?.unsafeIngredients || []}
         substitutes={modalData.item?.substitutes || []}
         recipeName={modalData.item?.receta_nombre || ""}
