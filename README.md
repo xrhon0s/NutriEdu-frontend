@@ -92,7 +92,9 @@ Recetas publicas usan paginacion incremental. La vista inicial muestra seis reco
 
 La base UI web usa tokens semanticos en `index.css` y componentes compartidos para shell, encabezados, botones, paginacion, mensajes y estados vacios. La navegacion autenticada ofrece menu responsive accesible hasta 1024 px. Recetas usa filtros etiquetados, tarjetas compactas con iconos Lucide, skeletons y reintento explicito de recomendaciones.
 
-El detalle de receta separa compatibilidad, descripcion, datos por porcion e ingredientes reales. Consulta en paralelo la receta, sus ingredientes y la seguridad del usuario; muestra los nutrientes ausentes como pendientes y ofrece reintento ante errores. El modal de alternativas funciona como consulta desde el detalle y como selector obligatorio desde el planificador, sin considerar resuelta una alerta cuando el usuario solo cierra el modal.
+El detalle de receta separa compatibilidad, descripcion, datos por porcion e ingredientes reales. Consulta en paralelo la receta, sus ingredientes y la seguridad del usuario; muestra los nutrientes ausentes como pendientes y ofrece reintento ante errores. El modal de alternativas es informativo: cerrar o revisar una alternativa no modifica la receta ni elimina su alerta.
+
+El planificador presenta 21 espacios semanales, selector compacto, progreso y estado de guardado. Los espacios vacios llevan el dia y la comida al formulario, y cualquier cambio local se identifica como pendiente hasta recibir confirmacion del backend. Si una receta previamente guardada deja de ser compatible por cambios en el perfil, debe retirarse antes de guardar; las sustituciones todavia no se persisten en el modelo de datos.
 
 Los campos de contrasena compartidos incluyen controles accesibles para mostrar u ocultar su contenido. El logo de la navegacion autenticada vuelve a `/recipes` y nunca elimina la sesion; solo `Cerrar sesion` borra el token y el usuario almacenados.
 
