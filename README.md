@@ -55,7 +55,7 @@ http://localhost:5173
 El backend esperado esta configurado en [src/services/api.jsx](src/services/api.jsx). En local usa:
 
 ```txt
-http://localhost:3000/api
+http://localhost:3002/api
 ```
 
 En despliegue usa la variable:
