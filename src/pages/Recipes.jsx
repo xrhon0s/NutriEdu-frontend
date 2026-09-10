@@ -1,213 +1,318 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Clock3,
+  Flame,
+  HeartPulse,
+  RotateCcw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import api from "../services/api";
-import NavBar from "../components/navBar";
+import AppShell from "../components/AppShell";
+import Button from "../components/Button";
+import EmptyState from "../components/EmptyState";
+import PageHeader from "../components/PageHeader";
+import Pagination from "../components/Pagination";
+import StatusMessage from "../components/StatusMessage";
+
+const healthRanges = {
+  muy_saludable: { min: 5 },
+  saludable: { min: 3, max: 4 },
+  moderada: { max: 2 },
+};
+
+const SAFE_RECIPES_PAGE_SIZE = 6;
+const SEARCH_RESULTS_PAGE_SIZE = 12;
 
 export default function Recipes() {
-  const [safeRecipes, setSafeRecipes] = useState([]);
+  const [recipes, setRecipes] = useState([]);
   const [recommendedRecipes, setRecommendedRecipes] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
+  const [recommendationContext, setRecommendationContext] = useState(null);
+  const [recommendedLoading, setRecommendedLoading] = useState(true);
+  const [recommendedError, setRecommendedError] = useState("");
+  const [recipesError, setRecipesError] = useState("");
+  const [pagination, setPagination] = useState({ hasMore: false });
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-
-  // Estados de búsqueda y filtros
   const [query, setQuery] = useState("");
   const [nivelFilter, setNivelFilter] = useState("");
   const [caloriasMin, setCaloriasMin] = useState("");
   const [caloriasMax, setCaloriasMax] = useState("");
-
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = JSON.parse(localStorage.getItem("user"))?.id;
   const searchInputRef = useRef(null);
+  const isDefaultView = query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax;
 
-  const healthRanges = {
-    muy_saludable: { min: 5 },
-    saludable: { min: 3, max: 4 },
-    moderada: { max: 2 },
-  };
+  const fetchRecommendations = useCallback(async () => {
+    try {
+      setRecommendedLoading(true);
+      setRecommendedError("");
+      const response = await api.get("/recipes/recommendations", { params: { limit: 6, offset: 0 } });
+      setRecommendedRecipes(response.data.recipes || []);
+      setRecommendationContext(response.data.profileContext || null);
+    } catch (error) {
+      console.error(error);
+      setRecommendedError(error.response?.data?.error || "No pudimos calcular tus recomendaciones.");
+    } finally {
+      setRecommendedLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchRecipes = async () => {
+    if (userId) void fetchRecommendations();
+  }, [fetchRecommendations, userId]);
+
+  useEffect(() => setPage(1), [query, nivelFilter, caloriasMin, caloriasMax]);
+
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
       try {
         setLoading(true);
-        const [safeRes, recommendedRes] = await Promise.all([
-          api.get(`/recipes/safe/${user.id}`),
-          api.get(`/recipes/recommended/${user.id}`)
-        ]);
-        setSafeRecipes(safeRes.data);
-        setRecommendedRecipes(recommendedRes.data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (user?.id) fetchRecipes();
-  }, [user?.id]);
-
-  const fetchSearchResults = useCallback(
-    debounce(async () => {
-      if (query.trim() === "" && !nivelFilter && !caloriasMin && !caloriasMax) {
-        setSearchResults([]);
-        return;
-      }
-
-      try {
+        setRecipesError("");
         const healthRange = healthRanges[nivelFilter] || {};
-        const res = await api.get(`/recipes/search/${user.id}`, {
+        const pageSize = isDefaultView ? SAFE_RECIPES_PAGE_SIZE : SEARCH_RESULTS_PAGE_SIZE;
+        const response = await api.get(`/recipes/search/${userId}`, {
           params: {
             query: query || undefined,
             nivel_min: healthRange.min,
             nivel_max: healthRange.max,
             calorias_min: caloriasMin || undefined,
             calorias_max: caloriasMax || undefined,
+            safe_only: isDefaultView ? "true" : undefined,
+            paginated: "true",
+            limit: pageSize,
+            offset: (page - 1) * pageSize,
           },
         });
-        setSearchResults(res.data);
-      } catch (err) {
-        console.error(err);
+        if (active) {
+          setRecipes(response.data.recipes || []);
+          setPagination(response.data.pagination || { hasMore: false });
+        }
+      } catch (error) {
+        console.error(error);
+        if (active) setRecipesError(error.response?.data?.error || "No pudimos consultar las recetas.");
+      } finally {
+        if (active) setLoading(false);
       }
-    }, 300),
-    [user?.id, query, nivelFilter, caloriasMin, caloriasMax]
-  );
+    }, 300);
 
-  useEffect(() => {
-    fetchSearchResults();
-  }, [query, nivelFilter, caloriasMin, caloriasMax, fetchSearchResults]);
-
-  function debounce(fn, delay) {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn(...args), delay);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
     };
-  }
+  }, [userId, query, nivelFilter, caloriasMin, caloriasMax, page, isDefaultView]);
 
   const resetFilters = () => {
     setQuery("");
     setNivelFilter("");
     setCaloriasMin("");
     setCaloriasMax("");
-    searchInputRef.current.focus();
+    setPage(1);
+    searchInputRef.current?.focus();
   };
 
-  const getHealthLabel = (nivel) => {
-    if (nivel >= 5) return "Muy saludable";
-    if (nivel >= 3) return "Saludable";
-    return "Moderada";
-  };
-
-  const getHealthColor = (nivel) => {
-    if (nivel >= 5) return "bg-green-100 text-green-700";
-    if (nivel >= 3) return "bg-emerald-100 text-emerald-700";
-    return "bg-yellow-100 text-yellow-700";
-  };
-
-  const RecipeCard = ({ recipe }) => (
-    <div
-      className={`bg-white rounded-3xl shadow-md p-6 border transition cursor-pointer hover:shadow-xl hover:-translate-y-1
-        ${recipe.hasUnsafeIngredients ? "border-red-300 bg-red-50" : "border-green-100"}`}
-      onClick={() => navigate(`/recipes/${recipe.id}`)}
-    >
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${recipe.hasUnsafeIngredients ? "bg-red-100" : "bg-green-100"}`}>
-          {recipe.hasUnsafeIngredients ? "⚠️" : "🥗"}
-        </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getHealthColor(recipe.nivel_salud)}`}>
-          {getHealthLabel(recipe.nivel_salud)}
-        </span>
-      </div>
-      <h2 className="text-xl font-bold text-gray-800 mb-2">{recipe.nombre}</h2>
-      <p className="text-gray-600 text-sm mb-5 min-h-[60px]">{recipe.descripcion}</p>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-green-50 rounded-2xl p-3">
-          <p className="text-xs text-gray-500">Calorías</p>
-          <p className="font-semibold text-gray-800">{recipe.calorias} kcal</p>
-        </div>
-        <div className="bg-green-50 rounded-2xl p-3">
-          <p className="text-xs text-gray-500">Tiempo</p>
-          <p className="font-semibold text-gray-800">{recipe.tiempo_preparacion ? `${recipe.tiempo_preparacion} min` : "No definido"}</p>
-        </div>
-        <div className="bg-green-50 rounded-2xl p-3 col-span-2">
-          <p className="text-xs text-gray-500">Nivel de salud</p>
-          <p className="font-semibold text-gray-800">{recipe.nivel_salud}/5</p>
-        </div>
-      </div>
-      <div className="mt-5 flex items-center justify-between">
-        {recipe.hasUnsafeIngredients ? (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 animate-pulse">
-            Ingredientes restringidos
-          </span>
-        ) : (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-            Segura para ti
-          </span>
-        )}
-        <span className="text-green-700 font-semibold text-sm">Ver más</span>
-      </div>
-    </div>
-  );
-
-  if (loading) return <p className="text-center mt-10">Cargando recetas...</p>;
+  const cards = (items) => items.map((recipe) => (
+    <RecipeCard key={recipe.id} recipe={recipe} onOpen={() => navigate(`/recipes/${recipe.id}`)} />
+  ));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white">
-      <NavBar />
-      <div className="px-6 py-10 max-w-6xl mx-auto">
+    <AppShell className="max-w-6xl">
+      <PageHeader
+        title="Recetas"
+        subtitle="Encuentra opciones compatibles con tus restricciones y revisa cómo se ajustan a tu perfil."
+      />
 
-        {/* Input de búsqueda */}
-        <input
-          autoFocus
-          ref={searchInputRef}
-          type="text"
-          placeholder="Buscar recetas..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full mb-4 p-4 rounded-2xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white shadow-sm"
-        />
+      <section className="mb-8 border-y border-[var(--color-border)] bg-white py-4" aria-label="Filtros de recetas">
+        <div className="grid gap-3 px-3 sm:px-4 lg:grid-cols-[minmax(260px,1fr)_190px_150px_150px_auto] lg:items-end">
+          <label className="min-w-0">
+            <span className="mb-1.5 block text-xs font-bold text-[var(--color-text-muted)]">Buscar</span>
+            <span className="relative block">
+              <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
+              <input
+                ref={searchInputRef}
+                type="search"
+                placeholder="Nombre o descripción"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="field-control pl-10"
+              />
+            </span>
+          </label>
 
-        {/* Filtros */}
-        <div className="flex gap-3 mb-6 flex-wrap items-center">
-          <select value={nivelFilter} onChange={(e) => setNivelFilter(e.target.value)} className="border rounded-xl p-2">
-            <option value="">Nivel de salud</option>
-            <option value="muy_saludable">Muy saludable</option>
-            <option value="saludable">Saludable</option>
-            <option value="moderada">Moderada</option>
-          </select>
-          <input type="number" placeholder="Calorías mínimas" value={caloriasMin} onChange={(e) => setCaloriasMin(e.target.value)} className="border rounded-xl p-2 w-36"/>
-          <input type="number" placeholder="Calorías máximas" value={caloriasMax} onChange={(e) => setCaloriasMax(e.target.value)} className="border rounded-xl p-2 w-36"/>
-          <button onClick={resetFilters} className="bg-blue-500 text-white rounded-xl px-4 py-2 font-semibold hover:bg-blue-600 transition">Restablecer filtros</button>
+          <label>
+            <span className="mb-1.5 block text-xs font-bold text-[var(--color-text-muted)]">Nivel de salud</span>
+            <select value={nivelFilter} onChange={(event) => setNivelFilter(event.target.value)} className="field-control">
+              <option value="">Todos</option>
+              <option value="muy_saludable">Muy saludable</option>
+              <option value="saludable">Saludable</option>
+              <option value="moderada">Moderada</option>
+            </select>
+          </label>
+
+          <label>
+            <span className="mb-1.5 block text-xs font-bold text-[var(--color-text-muted)]">Calorías mín.</span>
+            <input type="number" min="0" placeholder="0" value={caloriasMin} onChange={(event) => setCaloriasMin(event.target.value)} className="field-control" />
+          </label>
+
+          <label>
+            <span className="mb-1.5 block text-xs font-bold text-[var(--color-text-muted)]">Calorías máx.</span>
+            <input type="number" min="0" placeholder="Sin límite" value={caloriasMax} onChange={(event) => setCaloriasMax(event.target.value)} className="field-control" />
+          </label>
+
+          <Button variant="secondary" onClick={resetFilters} disabled={isDefaultView}>
+            <RotateCcw aria-hidden="true" size={17} />
+            Restablecer
+          </Button>
         </div>
+      </section>
 
-        {/* Contenido */}
-        {query.length === 0 && !nivelFilter && !caloriasMin && !caloriasMax ? (
-          <>
-            {/* Recetas seguras */}
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-800 mb-1">Recetas seguras</h2>
-              <p className="text-gray-600 text-sm mb-6">Compatibles con tus restricciones alimentarias.</p>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {safeRecipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
+      {isDefaultView ? (
+        <>
+          <RecipeSection
+            title="Recetas seguras"
+            description="Compatibles con tus restricciones alimentarias registradas."
+            icon={ShieldCheck}
+          >
+            {recipesError ? <StatusMessage type="error" message={recipesError} /> : null}
+            {loading ? <RecipeSkeletonGrid /> : recipes.length ? <RecipeGrid>{cards(recipes)}</RecipeGrid> : <EmptyState title="No hay recetas seguras" description="Revisa tus restricciones o vuelve a intentarlo más tarde." />}
+            {!loading && !recipesError ? <Pagination page={page} hasMore={pagination.hasMore} onPage={setPage} /> : null}
+          </RecipeSection>
+
+          <RecipeSection
+            title="Recomendadas para ti"
+            description="Priorizadas según restricciones, objetivos, condiciones, metas y preferencias disponibles."
+            icon={Sparkles}
+          >
+            {recommendationContext?.clinicalReviewRequired ? (
+              <StatusMessage type="warning" message="Tu perfil contiene condiciones o límites que requieren acompañamiento profesional. El puntaje es informativo." />
+            ) : null}
+            {recommendedError ? (
+              <div>
+                <StatusMessage type="error" message={recommendedError} />
+                <Button variant="secondary" onClick={() => void fetchRecommendations()}>Volver a intentar</Button>
               </div>
-            </section>
-            {/* Recetas recomendadas */}
-            <section>
-              <h2 className="text-2xl font-bold text-gray-800 mb-1">Recomendadas para ti</h2>
-              <p className="text-gray-600 text-sm mb-6">Seleccionadas según tu perfil y nivel de salud.</p>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recommendedRecipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
-              </div>
-            </section>
-          </>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {searchResults.length === 0 ? (
-              <p className="text-gray-500 col-span-3">No se encontraron recetas.</p>
+            ) : recommendedLoading ? (
+              <RecipeSkeletonGrid />
+            ) : recommendedRecipes.length ? (
+              <RecipeGrid>{cards(recommendedRecipes)}</RecipeGrid>
             ) : (
-              searchResults.map((r) => <RecipeCard key={r.id} recipe={r} />)
+              <EmptyState title="Aún no hay recomendaciones" description="Completa tu perfil para obtener una selección personalizada." />
             )}
-          </div>
-        )}
+          </RecipeSection>
+        </>
+      ) : (
+        <RecipeSection
+          title="Resultados"
+          description={loading ? "Actualizando resultados..." : `${recipes.length} recetas en esta página.`}
+          icon={Search}
+        >
+          {recipesError ? <StatusMessage type="error" message={recipesError} /> : null}
+          {loading ? <RecipeSkeletonGrid count={6} /> : recipes.length ? <RecipeGrid>{cards(recipes)}</RecipeGrid> : <EmptyState title="Sin coincidencias" description="Prueba otro nombre o amplía el rango de calorías." action={<Button variant="secondary" onClick={resetFilters}>Limpiar filtros</Button>} />}
+          {!loading && !recipesError && recipes.length ? <Pagination page={page} hasMore={pagination.hasMore} onPage={setPage} /> : null}
+        </RecipeSection>
+      )}
+    </AppShell>
+  );
+}
+
+function RecipeSection({ title, description, icon: Icon, children }) {
+  return (
+    <section className="mb-10" aria-labelledby={`section-${title.replaceAll(" ", "-").toLowerCase()}`}>
+      <div className="mb-5 flex items-start gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+          <Icon aria-hidden="true" size={20} />
+        </span>
+        <div>
+          <h2 id={`section-${title.replaceAll(" ", "-").toLowerCase()}`} className="text-xl font-bold text-[var(--color-text)]">{title}</h2>
+          <p className="mt-1 text-sm leading-5 text-[var(--color-text-muted)]">{description}</p>
+        </div>
       </div>
+      {children}
+    </section>
+  );
+}
+
+function RecipeGrid({ children }) {
+  return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{children}</div>;
+}
+
+function RecipeCard({ recipe, onOpen }) {
+  const unsafe = Boolean(recipe.hasUnsafeIngredients);
+  const recommendation = recipe.recommendation;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`group flex min-h-64 w-full flex-col rounded-lg border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${unsafe ? "border-red-300" : "border-[var(--color-border)]"}`}
+      aria-label={`Ver receta ${recipe.nombre}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${unsafe ? "bg-red-50 text-red-700" : "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"}`}>
+          {unsafe ? <AlertTriangle aria-hidden="true" size={19} /> : <ShieldCheck aria-hidden="true" size={19} />}
+        </span>
+        <div className="flex flex-wrap justify-end gap-1.5">
+          {recommendation ? <span className="rounded-md bg-sky-50 px-2 py-1 text-xs font-bold text-sky-800">Afinidad {recommendation.score}/100</span> : null}
+          <span className={`rounded-md px-2 py-1 text-xs font-bold ${healthColor(recipe.nivel_salud)}`}>{healthLabel(recipe.nivel_salud)}</span>
+        </div>
+      </div>
+
+      <h3 className="mt-4 text-lg font-bold leading-6 text-[var(--color-text)]">{recipe.nombre}</h3>
+      <p className="mt-1 line-clamp-2 min-h-10 text-sm leading-5 text-[var(--color-text-muted)]">{recipe.descripcion || "Descripción pendiente."}</p>
+
+      {recommendation ? (
+        <div className="mt-3 min-h-11 border-l-2 border-sky-300 pl-3 text-xs leading-5 text-[var(--color-text-muted)]">
+          <p className="line-clamp-2">{recommendation.reasons[0] || "Compatible con la información disponible de tu perfil."}</p>
+          {recommendation.confidence < 0.5 ? <p className="font-semibold text-amber-800">Datos nutricionales limitados</p> : null}
+        </div>
+      ) : <div className="min-h-3" />}
+
+      <div className="mt-auto grid grid-cols-3 gap-2 border-y border-[var(--color-border)] py-3 text-xs text-[var(--color-text-muted)]">
+        <Metric icon={Flame} label={`${recipe.calorias ?? "--"} kcal`} />
+        <Metric icon={Clock3} label={recipe.tiempo_preparacion ? `${recipe.tiempo_preparacion} min` : "Sin tiempo"} />
+        <Metric icon={HeartPulse} label={`${recipe.nivel_salud}/5`} />
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span className={`text-xs font-bold ${unsafe ? "text-red-700" : "text-[var(--color-primary)]"}`}>{unsafe ? "Revisar ingredientes" : "Segura para ti"}</span>
+        <span className="inline-flex items-center gap-1 text-sm font-bold text-[var(--color-primary)]">Ver detalle <ArrowRight aria-hidden="true" className="transition-transform group-hover:translate-x-0.5" size={16} /></span>
+      </div>
+    </button>
+  );
+}
+
+function Metric({ icon: Icon, label }) {
+  return <span className="inline-flex min-w-0 items-center gap-1.5"><Icon aria-hidden="true" className="shrink-0" size={15} /><span className="truncate">{label}</span></span>;
+}
+
+function RecipeSkeletonGrid({ count = 3 }) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" aria-label="Cargando recetas" aria-busy="true">
+      {Array.from({ length: count }, (_, index) => (
+        <div key={index} className="min-h-64 animate-pulse rounded-lg border border-[var(--color-border)] bg-white p-5">
+          <div className="h-9 w-9 rounded-lg bg-gray-200" />
+          <div className="mt-4 h-5 w-2/3 rounded bg-gray-200" />
+          <div className="mt-3 h-4 w-full rounded bg-gray-100" />
+          <div className="mt-2 h-4 w-4/5 rounded bg-gray-100" />
+          <div className="mt-14 h-11 border-y border-gray-100" />
+        </div>
+      ))}
     </div>
   );
+}
+
+function healthLabel(level) {
+  if (level >= 5) return "Muy saludable";
+  if (level >= 3) return "Saludable";
+  return "Moderada";
+}
+
+function healthColor(level) {
+  if (level >= 5) return "bg-green-50 text-green-800";
+  if (level >= 3) return "bg-teal-50 text-teal-800";
+  return "bg-amber-50 text-amber-900";
 }

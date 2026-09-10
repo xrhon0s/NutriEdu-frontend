@@ -1,9 +1,12 @@
-export default function EmptyState({ title, description }) {
+import { Salad } from "lucide-react";
+
+export default function EmptyState({ title, description, action = null, icon: Icon = Salad }) {
   return (
-    <div className="bg-white border border-green-100 rounded-3xl shadow-sm p-8 text-center">
-      <div className="text-4xl mb-3">🌿</div>
-      <h3 className="text-xl font-bold text-gray-800">{title}</h3>
-      <p className="text-gray-500 mt-2">{description}</p>
+    <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-white px-6 py-10 text-center">
+      <Icon aria-hidden="true" className="mx-auto mb-3 text-[var(--color-primary)]" size={30} strokeWidth={1.8} />
+      <h3 className="text-lg font-bold text-[var(--color-text)]">{title}</h3>
+      <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--color-text-muted)]">{description}</p>
+      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
     </div>
   );
 }

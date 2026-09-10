@@ -1,145 +1,244 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Beef,
+  Clock3,
+  Droplets,
+  Flame,
+  HeartPulse,
+  Salad,
+  ShieldCheck,
+  Wheat,
+} from "lucide-react";
 import api from "../services/api";
-import NavBar from "../components/navBar";
+import AppShell from "../components/AppShell";
+import Button from "../components/Button";
+import EmptyState from "../components/EmptyState";
+import PageHeader from "../components/PageHeader";
+import StatusMessage from "../components/StatusMessage";
 import UnsafeIngredientModal from "../components/UnsafeIngredientModal";
+
+const nutritionFields = [
+  { key: "calorias", label: "Calorías", unit: "kcal", icon: Flame },
+  { key: "protein_g", label: "Proteína", unit: "g", icon: Beef },
+  { key: "carbs_g", label: "Carbohidratos", unit: "g", icon: Wheat },
+  { key: "fat_g", label: "Grasa total", unit: "g", icon: Droplets },
+  { key: "saturated_fat_g", label: "Grasa saturada", unit: "g", icon: Droplets },
+  { key: "sugar_g", label: "Azúcares", unit: "g", icon: Wheat },
+  { key: "fiber_g", label: "Fibra", unit: "g", icon: Salad },
+  { key: "sodium_mg", label: "Sodio", unit: "mg", icon: Droplets },
+];
 
 export default function RecipeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const userId = JSON.parse(localStorage.getItem("user"))?.id;
   const [recipe, setRecipe] = useState(null);
+  const [ingredients, setIngredients] = useState([]);
   const [unsafeIngredients, setUnsafeIngredients] = useState([]);
   const [substitutes, setSubstitutes] = useState([]);
   const [showUnsafeModal, setShowUnsafeModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const fetchRecipe = useCallback(async () => {
+    if (!userId) return;
 
-  // Traer receta y revisar seguridad
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      const [recipeResponse, ingredientsResponse, safetyResponse] = await Promise.all([
+        api.get(`/recipes/${id}`),
+        api.get(`/recipes/${id}/ingredients`),
+        api.get(`/recipes/check/${id}/${userId}`),
+      ]);
+      setRecipe(recipeResponse.data);
+      setIngredients(ingredientsResponse.data || []);
+      setUnsafeIngredients(safetyResponse.data.unsafeIngredients || []);
+      setSubstitutes(safetyResponse.data.substitutes || []);
+    } catch (error) {
+      console.error(error);
+      setRecipe(null);
+      setErrorMessage(error.response?.data?.message || error.response?.data?.error || "No pudimos cargar la receta.");
+    } finally {
+      setLoading(false);
+    }
+  }, [id, userId]);
+
   useEffect(() => {
-    const fetchRecipe = async () => {
-      try {
-        const res = await api.get(`/recipes/${id}`);
-        setRecipe(res.data);
+    void fetchRecipe();
+  }, [fetchRecipe]);
 
-        const safetyRes = await api.get(`/recipes/check/${id}/${user.id}`);
-        setUnsafeIngredients(safetyRes.data.unsafeIngredients);
-        setSubstitutes(safetyRes.data.substitutes);
-      } catch (error) {
-        setErrorMessage(error.response?.data?.message || "No se pudo cargar la receta");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const backButton = (
+    <Button variant="secondary" onClick={() => navigate("/recipes")}>
+      <ArrowLeft aria-hidden="true" size={17} />
+      Volver a recetas
+    </Button>
+  );
 
-    fetchRecipe();
-  }, [id, user.id]);
-
-  const getHealthLabel = (nivel) => {
-    if (nivel >= 5) return "Muy saludable";
-    if (nivel >= 3) return "Saludable";
-    return "Moderada";
-  };
-
-  if (loading) return <div>Cargando receta...</div>;
-  if (!recipe)
+  if (loading) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <div className="max-w-4xl mx-auto p-6 text-center">
-          <p>{errorMessage || "Receta no encontrada"}</p>
-          <button onClick={() => navigate("/recipes")} className="mt-4 px-4 py-2 bg-green-600 text-white rounded">
-            Volver a recetas
-          </button>
-        </div>
-      </div>
+      <AppShell className="max-w-5xl">
+        <RecipeDetailSkeleton />
+      </AppShell>
     );
+  }
+
+  if (!recipe) {
+    return (
+      <AppShell className="max-w-5xl">
+        <PageHeader title="Detalle de receta" subtitle="No fue posible consultar esta información." actions={backButton} />
+        <StatusMessage type="error" message={errorMessage || "Receta no encontrada."} />
+        <EmptyState
+          title="La receta no está disponible"
+          description="Comprueba tu conexión o vuelve al catálogo para elegir otra receta."
+          action={<Button onClick={() => void fetchRecipe()}>Volver a intentar</Button>}
+        />
+      </AppShell>
+    );
+  }
+
+  const isSafe = unsafeIngredients.length === 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-100 to-white">
-      <NavBar />
+    <AppShell className="max-w-5xl">
+      <PageHeader
+        title={recipe.nombre}
+        subtitle="Detalle nutricional y compatibilidad con tus restricciones registradas."
+        actions={backButton}
+      />
 
-      <div className="max-w-4xl mx-auto px-6 py-10">
-        <button onClick={() => navigate("/recipes")} className="mb-6 text-green-700 font-medium hover:underline">
-          ← Volver a recetas
-        </button>
-
-        <div className="bg-white rounded-3xl shadow-xl border border-green-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-emerald-500 text-white p-8">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <p className="text-sm opacity-90 mb-2">Detalle de receta</p>
-                <h1 className="text-4xl font-extrabold">{recipe.nombre}</h1>
-              </div>
-              <span className="px-4 py-2 rounded-full bg-white/20 text-sm font-semibold">
-                {getHealthLabel(recipe.nivel_salud)}
-              </span>
-            </div>
-          </div>
-
-          <div className="p-8 space-y-6">
-            {unsafeIngredients.length > 0 && (
-              <div className="bg-red-100 border-l-4 border-red-500 p-4 rounded-md">
-                <p className="font-semibold text-red-700 mb-2">⚠ Ingredientes no seguros:</p>
-                <ul className="list-disc list-inside text-red-700">
-                  {unsafeIngredients.map((ing) => (
-                    <li key={ing.id}>{ing.nombre}</li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => setShowUnsafeModal(true)}
-                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                >
-                  Ver sustitutos
-                </button>
-              </div>
-            )}
-
-            <p className="text-gray-700 text-lg leading-relaxed">{recipe.descripcion}</p>
-
-            <div className="grid sm:grid-cols-3 gap-4 mb-8">
-              <div className="bg-green-50 rounded-2xl p-5">
-                <p className="text-sm text-gray-500">Calorías</p>
-                <p className="text-2xl font-bold text-gray-800 mt-1">{recipe.calorias} kcal</p>
-              </div>
-
-              <div className="bg-green-50 rounded-2xl p-5">
-                <p className="text-sm text-gray-500">Tiempo de preparación</p>
-                <p className="text-2xl font-bold text-gray-800 mt-1">
-                  {recipe.tiempo_preparacion ? `${recipe.tiempo_preparacion} min` : "No definido"}
-                </p>
-              </div>
-
-              <div className="bg-green-50 rounded-2xl p-5">
-                <p className="text-sm text-gray-500">Nivel de salud</p>
-                <p className="text-2xl font-bold text-gray-800 mt-1">{recipe.nivel_salud}/5</p>
-              </div>
-            </div>
-
-            {/* Solo Información general */}
-            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-3">Información general</h2>
-              <p className="text-gray-700 leading-relaxed">
-                {recipe.descripcion || "Esta receta no tiene una descripción registrada todavía."}
-              </p>
-            </div>
+      <section
+        className={`mb-6 flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${isSafe ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}
+        aria-labelledby="recipe-safety-title"
+      >
+        <div className="flex items-start gap-3">
+          {isSafe ? <ShieldCheck aria-hidden="true" className="mt-0.5 shrink-0 text-green-700" size={22} /> : <AlertTriangle aria-hidden="true" className="mt-0.5 shrink-0 text-red-700" size={22} />}
+          <div>
+            <h2 id="recipe-safety-title" className={`font-bold ${isSafe ? "text-green-900" : "text-red-900"}`}>
+              {isSafe ? "Compatible con tus restricciones" : `${unsafeIngredients.length} ${unsafeIngredients.length === 1 ? "ingrediente requiere" : "ingredientes requieren"} revisión`}
+            </h2>
+            <p className={`mt-1 text-sm leading-5 ${isSafe ? "text-green-800" : "text-red-800"}`}>
+              {isSafe
+                ? "No encontramos coincidencias con las restricciones de tu perfil."
+                : unsafeIngredients.map((ingredient) => ingredient.nombre).join(", ")}
+            </p>
           </div>
         </div>
+        {!isSafe ? (
+          <Button variant="danger" className="shrink-0" onClick={() => setShowUnsafeModal(true)}>
+            Ver alternativas
+          </Button>
+        ) : null}
+      </section>
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.75fr)]">
+        <div className="space-y-6">
+          <section className="surface-panel p-5 sm:p-6" aria-labelledby="general-information-title">
+            <h2 id="general-information-title" className="text-xl font-bold text-[var(--color-text)]">Información general</h2>
+            <p className="mt-3 leading-7 text-[var(--color-text-muted)]">
+              {recipe.descripcion || "Esta receta todavía no tiene una descripción registrada."}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 border-t border-[var(--color-border)] pt-4 text-sm">
+              <DetailFact icon={Clock3} label="Preparación" value={recipe.tiempo_preparacion ? `${recipe.tiempo_preparacion} min` : "No definida"} />
+              <DetailFact icon={HeartPulse} label="Nivel de salud" value={`${recipe.nivel_salud}/5 · ${healthLabel(recipe.nivel_salud)}`} />
+              {recipe.servings ? <DetailFact icon={Salad} label="Porciones" value={recipe.servings} /> : null}
+              {recipe.serving_size_g ? <DetailFact icon={Salad} label="Tamaño de porción" value={`${recipe.serving_size_g} g`} /> : null}
+            </div>
+          </section>
+
+          <section className="surface-panel overflow-hidden" aria-labelledby="nutrition-title">
+            <div className="border-b border-[var(--color-border)] px-5 py-4 sm:px-6">
+              <h2 id="nutrition-title" className="text-xl font-bold text-[var(--color-text)]">Información nutricional</h2>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">Valores registrados por porción.</p>
+            </div>
+            <dl className="grid sm:grid-cols-2">
+              {nutritionFields.map(({ key, label, unit, icon: Icon }) => (
+                <div key={key} className="flex min-h-20 items-center gap-3 border-b border-[var(--color-border)] px-5 py-3 odd:sm:border-r sm:px-6 last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0">
+                  <Icon aria-hidden="true" className="shrink-0 text-[var(--color-primary)]" size={19} />
+                  <dt className="text-sm text-[var(--color-text-muted)]">{label}</dt>
+                  <dd className="ml-auto text-right font-bold text-[var(--color-text)]">{formatNutrient(recipe[key], unit)}</dd>
+                </div>
+              ))}
+            </dl>
+            {recipe.nutrition_source && recipe.nutrition_source !== "unknown" ? (
+              <p className="px-5 py-3 text-xs text-[var(--color-text-muted)] sm:px-6">Fuente nutricional: {nutritionSourceLabel(recipe.nutrition_source)}</p>
+            ) : null}
+          </section>
+        </div>
+
+        <section className="surface-panel p-5 sm:p-6" aria-labelledby="ingredients-title">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="ingredients-title" className="text-xl font-bold text-[var(--color-text)]">Ingredientes</h2>
+            <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-1 text-xs font-bold text-[var(--color-text-muted)]">{ingredients.length}</span>
+          </div>
+          {ingredients.length ? (
+            <ul className="mt-4 divide-y divide-[var(--color-border)]">
+              {ingredients.map((ingredient) => {
+                const unsafe = unsafeIngredients.some((item) => item.id === ingredient.id);
+                return (
+                  <li key={ingredient.id} className="flex min-h-11 items-center gap-3 py-2.5 text-sm">
+                    {unsafe ? <AlertTriangle aria-hidden="true" className="shrink-0 text-red-700" size={17} /> : <ShieldCheck aria-hidden="true" className="shrink-0 text-green-700" size={17} />}
+                    <span className={unsafe ? "font-semibold text-red-800" : "text-[var(--color-text)]"}>{ingredient.nombre}</span>
+                    {unsafe ? <span className="ml-auto text-xs font-bold text-red-700">Revisar</span> : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm leading-6 text-[var(--color-text-muted)]">No hay ingredientes registrados para esta receta.</p>
+          )}
+        </section>
       </div>
 
-      {/* Modal de sustitutos */}
       <UnsafeIngredientModal
         isOpen={showUnsafeModal}
-        onClose={(chosenSubs) => {
-          console.log("Sustitutos seleccionados:", chosenSubs);
-          setShowUnsafeModal(false);
-        }}
+        onClose={() => setShowUnsafeModal(false)}
         unsafeIngredients={unsafeIngredients}
         substitutes={substitutes}
         recipeName={recipe.nombre}
       />
+    </AppShell>
+  );
+}
+
+function DetailFact({ icon: Icon, label, value }) {
+  return (
+    <span className="inline-flex items-center gap-2 text-[var(--color-text-muted)]">
+      <Icon aria-hidden="true" size={17} />
+      <span>{label}: <strong className="text-[var(--color-text)]">{value}</strong></span>
+    </span>
+  );
+}
+
+function RecipeDetailSkeleton() {
+  return (
+    <div className="animate-pulse" aria-label="Cargando detalle de receta" aria-busy="true">
+      <div className="h-9 w-2/3 max-w-lg rounded bg-gray-200" />
+      <div className="mt-3 h-5 w-1/2 max-w-md rounded bg-gray-100" />
+      <div className="mt-8 h-20 rounded-lg bg-gray-100" />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.75fr)]">
+        <div className="h-96 rounded-lg border border-[var(--color-border)] bg-white" />
+        <div className="h-72 rounded-lg border border-[var(--color-border)] bg-white" />
+      </div>
     </div>
   );
+}
+
+function formatNutrient(value, unit) {
+  if (value === null || value === undefined || value === "") return "Pendiente";
+  return `${Number(value).toLocaleString("es-CO", { maximumFractionDigits: 1 })} ${unit}`;
+}
+
+function healthLabel(level) {
+  if (level >= 5) return "Muy saludable";
+  if (level >= 3) return "Saludable";
+  return "Moderada";
+}
+
+function nutritionSourceLabel(source) {
+  const labels = { calculated: "calculada", estimated: "estimada", verified: "verificada", imported: "importada" };
+  return labels[source] || source;
 }

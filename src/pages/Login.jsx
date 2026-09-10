@@ -20,23 +20,22 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const res = await api.post("/users/login", { email, password });
+      const normalizedEmail = email.trim().toLowerCase();
+      const res = await api.post("/users/login", { email: normalizedEmail, password });
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      const restrictionsRes = await api.get(`/users/restrictions/${res.data.user.id}`);
-
-      setMessage("Login exitoso");
-      setMessageType("success");
-
-      setTimeout(() => {
+      try {
+        const restrictionsRes = await api.get(`/users/restrictions/${res.data.user.id}`);
         if (restrictionsRes.data.hasRestrictions) {
           navigate("/recipes");
         } else {
           navigate("/profile");
         }
-}, 800);
+      } catch {
+        navigate("/profile");
+      }
     } catch (error) {
       setMessage(error.response?.data?.message || "Error en login");
       setMessageType("error");
@@ -67,6 +66,8 @@ export default function Login() {
             type="email"
             name="email"
             placeholder="correo@email.com"
+            autoComplete="email"
+            inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -77,6 +78,7 @@ export default function Login() {
             type="password"
             name="password"
             placeholder="********"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

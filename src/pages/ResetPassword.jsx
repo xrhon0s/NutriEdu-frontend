@@ -3,6 +3,8 @@ import { useState } from "react";
 import api from "../services/api";
 import { AuthField, AuthLayout, AuthSubmitButton } from "../components/AuthLayout";
 import StatusMessage from "../components/StatusMessage";
+import PasswordRequirements from "../components/PasswordRequirements";
+import { isPasswordValid } from "../utils/passwordPolicy";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -27,6 +29,12 @@ export default function ResetPassword() {
 
     if (password !== confirmPassword) {
       setMessage("Las contraseñas no coinciden");
+      setMessageType("error");
+      return;
+    }
+
+    if (!isPasswordValid(password)) {
+      setMessage("Revisa los requisitos de la contraseña antes de continuar");
       setMessageType("error");
       return;
     }
@@ -65,37 +73,56 @@ export default function ResetPassword() {
     >
       <StatusMessage message={message} type={messageType} />
 
+      {!token ? (
+        <div className="space-y-5">
+          <StatusMessage message="Este enlace no contiene un token de recuperación válido. Solicita uno nuevo." type="error" />
+          <Link to="/forgot-password" className="flex min-h-12 items-center justify-center rounded-lg border border-[var(--color-border)] px-4 py-3 font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)]">
+            Solicitar otro enlace
+          </Link>
+        </div>
+      ) : (
       <form onSubmit={resetPassword} className="space-y-5">
         <AuthField
           label="Nueva contraseña"
           type="password"
           name="password"
           placeholder="********"
+          autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          minLength={6}
+          minLength={10}
+          maxLength={72}
+          aria-invalid={password.length > 0 && !isPasswordValid(password)}
+          aria-describedby="reset-password-requirements"
           required
         />
+
+        <PasswordRequirements password={password} id="reset-password-requirements" />
 
         <AuthField
           label="Confirmar contraseña"
           type="password"
           name="confirmPassword"
           placeholder="********"
+          autoComplete="new-password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          minLength={6}
+          minLength={10}
+          maxLength={72}
+          error={confirmPassword && password !== confirmPassword ? "Las contraseñas no coinciden." : ""}
+          hint={confirmPassword && password === confirmPassword ? "Las contraseñas coinciden." : ""}
           required
         />
 
         <AuthSubmitButton
           loading={loading}
           loadingText="Guardando..."
-          disabled={!token}
+          disabled={!token || !isPasswordValid(password) || password !== confirmPassword}
         >
           Guardar contraseña
         </AuthSubmitButton>
       </form>
+      )}
     </AuthLayout>
   );
 }

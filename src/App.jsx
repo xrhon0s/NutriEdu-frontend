@@ -29,6 +29,7 @@ function AnimatedRoutes() {
   const [displayLocation, setDisplayLocation] = useState(location);
   const [transitionStage, setTransitionStage] = useState("route-enter");
   const user = JSON.parse(localStorage.getItem("user")); // obtener usuario logueado
+  const token = localStorage.getItem("token");
   const locationChanged =
     location.pathname !== displayLocation.pathname ||
     location.search !== displayLocation.search;
@@ -64,7 +65,7 @@ function AnimatedRoutes() {
   return (
     <div className={`route-transition ${transitionStage}`}>
       <Routes location={displayLocation}>
-        <Route path="/" element={withFooter(<Home />)} />
+        <Route path="/" element={token ? <Navigate to="/recipes" replace /> : withFooter(<Home />)} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
