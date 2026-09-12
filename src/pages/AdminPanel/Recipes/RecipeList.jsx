@@ -15,6 +15,7 @@ export default function RecipeList({ onEdit }) {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
+  const [nutritionStatus, setNutritionStatus] = useState("incomplete");
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState(null);
@@ -25,7 +26,7 @@ export default function RecipeList({ onEdit }) {
     try {
       setLoading(true);
       setError("");
-      const response = await api.get("/admin/recipes", { params: { page, limit: 15, search: search || undefined } });
+      const response = await api.get("/admin/recipes", { params: { page, limit: 15, search: search || undefined, nutritionStatus: nutritionStatus || undefined } });
       setRecipes(response.data.items);
       setPagination(response.data.pagination);
     } catch (requestError) {
@@ -33,7 +34,7 @@ export default function RecipeList({ onEdit }) {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [nutritionStatus, page, search]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -70,20 +71,22 @@ export default function RecipeList({ onEdit }) {
 
   return (
     <div className="space-y-5">
-      <form onSubmit={submitSearch} className="flex flex-col gap-2 sm:flex-row" role="search">
+      <form onSubmit={submitSearch} className="grid gap-2 sm:grid-cols-[minmax(220px,1fr)_190px_auto]" role="search">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">Buscar recetas</span>
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
           <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o descripción" className="input-admin w-full pl-10 pr-10" />
           {query ? <button type="button" onClick={() => setQuery("")} className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]" aria-label="Limpiar texto"><X size={17} /></button> : null}
         </label>
+        <label><span className="sr-only">Estado nutricional</span><select value={nutritionStatus} onChange={(event) => { setNutritionStatus(event.target.value); setPage(1); }} className="input-admin w-full"><option value="">Todas</option><option value="incomplete">Nutricion incompleta</option><option value="complete">Nutricion completa</option><option value="unreviewed">Sin revisar</option></select></label>
         <Button variant="secondary" type="submit"><Search size={17} /> Buscar</Button>
-        {search ? <Button variant="ghost" onClick={clearSearch}>Limpiar filtro</Button> : null}
       </form>
+
+      {search || nutritionStatus ? <div className="flex justify-end"><Button variant="ghost" onClick={() => { clearSearch(); setNutritionStatus(""); }}>Limpiar filtros</Button></div> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--color-text-muted)]">
         <p><strong className="text-[var(--color-text)]">{pagination.total}</strong> recetas registradas</p>
-        {search ? <p>Resultados para “{search}”</p> : null}
+        {search ? <p>Resultados para “{search}”</p> : <p>{nutritionStatus === "incomplete" ? "Pendientes de completar" : nutritionStatus === "complete" ? "Listas para evaluar" : nutritionStatus === "unreviewed" ? "Pendientes de fuente o revision" : "Todo el catalogo"}</p>}
       </div>
       <StatusMessage type="error" message={error} />
       <StatusMessage message={message} />
@@ -103,7 +106,7 @@ export default function RecipeList({ onEdit }) {
           </div>
         </>
       ) : (
-        <EmptyState icon={CookingPot} title="No encontramos recetas" description={search ? "Prueba con otro nombre o limpia la búsqueda." : "El catálogo todavía no tiene recetas registradas."} action={search ? <Button variant="secondary" onClick={clearSearch}>Limpiar búsqueda</Button> : null} />
+        <EmptyState icon={CookingPot} title="No encontramos recetas" description={search || nutritionStatus ? "No hay recetas que coincidan con los filtros actuales." : "El catálogo todavía no tiene recetas registradas."} action={search || nutritionStatus ? <Button variant="secondary" onClick={() => { clearSearch(); setNutritionStatus(""); }}>Limpiar filtros</Button> : null} />
       )}
 
       {!loading && recipes.length ? <Pagination page={pagination.page} totalPages={pagination.totalPages} hasMore={page < pagination.totalPages} onPage={setPage} /> : null}
