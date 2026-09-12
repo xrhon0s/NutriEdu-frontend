@@ -31,7 +31,8 @@ export default function RecipeForm({ recipe, onFinish }) {
     sodium_mg: recipe?.sodium_mg ?? "",
     serving_size_g: recipe?.serving_size_g ?? "",
     servings: recipe?.servings ?? 1,
-    nutrition_source: recipe?.nutrition_source || "unknown"
+    nutrition_source: recipe?.nutrition_source || "unknown",
+    nutrition_source_reference: recipe?.nutrition_source_reference || ""
   });
   const [ingredients, setIngredients] = useState([]);
   const [ingredientPage, setIngredientPage] = useState(1);
@@ -170,6 +171,9 @@ export default function RecipeForm({ recipe, onFinish }) {
               <option value="ai_estimate">Estimación de IA</option>
               <option value="professional">Profesional de nutrición</option>
             </select>
+          </label>
+          <label className="text-sm font-medium text-gray-700 sm:col-span-2">Referencia de la fuente
+            <input type="text" maxLength="1000" required={nutrition.nutrition_source !== "unknown"} disabled={nutrition.nutrition_source === "unknown"} value={nutrition.nutrition_source_reference} onChange={(event) => setNutrition((current) => ({ ...current, nutrition_source_reference: event.target.value }))} placeholder={nutrition.nutrition_source === "unknown" ? "Selecciona una fuente para documentarla" : "URL, ficha técnica, registro o profesional responsable"} className="mt-1 w-full rounded-lg border p-3 disabled:bg-gray-100 disabled:text-gray-500" />
           </label>
         </div>
       </fieldset>

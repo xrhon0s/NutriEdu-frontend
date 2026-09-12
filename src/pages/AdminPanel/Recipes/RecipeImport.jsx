@@ -11,6 +11,7 @@ export default function RecipeImport() {
   const [preview, setPreview] = useState(null);
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(false);
+  const isNutritionPatch = payload?.mode === "nutrition_patch";
 
   const clear = () => {
     setFileName("");
@@ -55,12 +56,31 @@ export default function RecipeImport() {
     }
   };
 
+  const downloadWorklist = async () => {
+    try {
+      setBusy(true);
+      const response = await api.get("/admin/recipes/nutrition-worklist", { responseType: "blob" });
+      const url = URL.createObjectURL(response.data);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "nutriedu-nutrition-worklist.json";
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setStatus({ type: "info", message: "Plantilla generada con los datos actuales. Completa los campos pendientes antes de previsualizarla." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.response?.data?.message || "No se pudo generar la plantilla de pendientes." });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const requestPreview = async () => {
     if (!payload) return;
     try {
       setBusy(true);
       setStatus(null);
-      const response = await api.post("/admin/recipes/import/preview", payload);
+      const endpoint = isNutritionPatch ? "/admin/recipes/nutrition-import/preview" : "/admin/recipes/import/preview";
+      const response = await api.post(endpoint, payload);
       setPreview(response.data);
       setStatus(response.data.valid
         ? { type: "success", message: "Vista previa completa. Revisa los cambios antes de confirmar." }
@@ -76,7 +96,8 @@ export default function RecipeImport() {
     if (!payload || !preview?.valid || !confirm("¿Importar este catálogo? Las recetas existentes con la misma clave serán actualizadas.")) return;
     try {
       setBusy(true);
-      const response = await api.post("/admin/recipes/import", payload);
+      const endpoint = isNutritionPatch ? "/admin/recipes/nutrition-import" : "/admin/recipes/import";
+      const response = await api.post(endpoint, payload);
       setStatus({ type: "success", message: `Importación ${response.data.importId} completada correctamente.` });
       setPreview(null);
     } catch (error) {
@@ -94,6 +115,9 @@ export default function RecipeImport() {
         <button type="button" onClick={() => void downloadTemplate()} disabled={busy} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 disabled:opacity-50">
           <Download size={18} /> Descargar ejemplo JSON
         </button>
+        <button type="button" onClick={() => void downloadWorklist()} disabled={busy} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 disabled:opacity-50">
+          <Download size={18} /> Descargar pendientes
+        </button>
         <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-4 text-sm font-semibold text-white hover:bg-green-700">
           <Upload size={18} /> Seleccionar JSON
           <input ref={inputRef} type="file" accept="application/json,.json" onChange={(event) => void selectFile(event)} className="sr-only" />
@@ -108,13 +132,15 @@ export default function RecipeImport() {
         </div>
       ) : null}
 
+      {payload ? <p className="border-l-4 border-green-600 bg-green-50 px-4 py-3 text-sm text-green-900">{isNutritionPatch ? "Modo nutricional: actualiza porciones, nutrientes y fuente; no modifica ingredientes." : "Modo catálogo: puede crear o actualizar recetas, ingredientes y sus cantidades."}</p> : null}
+
       {status ? <p className={`rounded-lg border p-3 text-sm ${status.type === "error" ? "border-red-200 bg-red-50 text-red-700" : status.type === "success" ? "border-green-200 bg-green-50 text-green-800" : "border-blue-200 bg-blue-50 text-blue-800"}`}>{status.message}</p> : null}
 
       {preview ? <PreviewReport preview={preview} /> : null}
 
       <div className="flex flex-wrap justify-end gap-3 border-t border-gray-200 pt-5">
         <button type="button" onClick={() => void requestPreview()} disabled={!payload || busy} className="min-h-11 rounded-lg border border-gray-300 px-5 text-sm font-semibold text-gray-700 disabled:opacity-40">{busy ? "Procesando..." : "Generar vista previa"}</button>
-        <button type="button" onClick={() => void executeImport()} disabled={!preview?.valid || busy} className="min-h-11 rounded-lg bg-green-600 px-5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-40">Importar catálogo</button>
+        <button type="button" onClick={() => void executeImport()} disabled={!preview?.valid || busy} className="min-h-11 rounded-lg bg-green-600 px-5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-40">{isNutritionPatch ? "Aplicar nutrición" : "Importar catálogo"}</button>
       </div>
     </div>
   );
