@@ -108,6 +108,8 @@ Cuando todos los ingredientes seleccionados tienen gramos, el formulario puede s
 
 La lista administrativa de ingredientes funciona como cola de calidad: inicia en perfiles incompletos, muestra cobertura de ocho nutrientes y número de recetas afectadas, permite filtrar por estado y prioriza los ingredientes más usados. Al editar un ingrediente, Administración permite buscar candidatos `Foundation` y `SR Legacy` en USDA FoodData Central. Cada resultado muestra descripción, categoría, FDC ID y cobertura preliminar. El administrador selecciona explícitamente uno y el backend valida su detalle completo antes de aplicar nutrientes, fuente y revisión.
 
+Si USDA no ofrece una coincidencia completa, el mismo formulario permite documentar manualmente los ocho nutrientes por 100 g. No admite perfiles parciales: exige tipo de fuente y referencia, y el backend registra quién realizó la revisión.
+
 La vista de recetas administrativas incorpora importacion JSON en dos pasos. Puede descargar un ejemplo de catalogo completo o una plantilla `nutrition_patch` generada con las recetas pendientes reales. Esta ultima actualiza solo porcion, nutrientes y fuente, sin reemplazar ingredientes. El boton de importacion solo se habilita si el backend aprueba la previsualizacion y exige confirmacion antes de escribir. Ingredientes permite asignar y filtrar tanto el grupo alimentario como el grupo de sustitucion culinaria. Las migraciones backend `010`, `011` y `012` requeridas por este flujo estan aplicadas y verificadas en Supabase.
 
 ## Flujo de autenticacion

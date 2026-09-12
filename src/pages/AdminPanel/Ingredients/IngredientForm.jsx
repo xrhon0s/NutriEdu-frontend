@@ -3,6 +3,13 @@ import { CheckCircle2, Database, Search } from "lucide-react";
 import api from "../../../services/api";
 import { foodGroupOptions, substitutionGroupOptions } from "../../../constants/ingredientTaxonomy";
 
+const nutritionFields = [
+  ["calories_per_100g", "Calorias", "kcal"], ["protein_per_100g", "Proteina", "g"],
+  ["carbs_per_100g", "Carbohidratos", "g"], ["fat_per_100g", "Grasa", "g"],
+  ["saturated_fat_per_100g", "Grasa saturada", "g"], ["sugar_per_100g", "Azucares", "g"],
+  ["fiber_per_100g", "Fibra", "g"], ["sodium_mg_per_100g", "Sodio", "mg"]
+];
+
 export default function IngredientForm({ ingredient, onFinish }) {
   const isEditing = !!ingredient;
   const [nombre, setNombre] = useState(ingredient?.nombre || "");
@@ -15,6 +22,11 @@ export default function IngredientForm({ ingredient, onFinish }) {
   const [fdcBusy, setFdcBusy] = useState(false);
   const [fdcStatus, setFdcStatus] = useState(null);
   const [currentFoodData, setCurrentFoodData] = useState({ fdcId: ingredient?.fdc_id || null, source: ingredient?.nutrition_source || "unknown" });
+  const [nutrition, setNutrition] = useState(() => Object.fromEntries(nutritionFields.map(([field]) => [field, ingredient?.[field] ?? ""])));
+  const [nutritionSource, setNutritionSource] = useState(["manual", "professional"].includes(ingredient?.nutrition_source) ? ingredient.nutrition_source : "manual");
+  const [nutritionReference, setNutritionReference] = useState(ingredient?.nutrition_source_reference || "");
+  const [nutritionDirty, setNutritionDirty] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const searchFoodData = async () => {
     if (fdcQuery.trim().length < 2) return;
@@ -39,7 +51,10 @@ export default function IngredientForm({ ingredient, onFinish }) {
       setFdcBusy(true);
       setFdcStatus(null);
       const response = await api.post(`/admin/ingredients/${ingredient.id}/fdc`, { fdcId: selectedFdcId });
-      setCurrentFoodData({ fdcId: response.data.ingredient.fdc_id, source: response.data.ingredient.nutrition_source });
+      const updated = response.data.ingredient;
+      setCurrentFoodData({ fdcId: updated.fdc_id, source: updated.nutrition_source });
+      setNutrition(Object.fromEntries(nutritionFields.map(([field]) => [field, updated[field] ?? ""])));
+      setNutritionDirty(false);
       setFdcStatus({ type: "success", message: "Perfil nutricional USDA aplicado y registrado." });
     } catch (error) {
       const missing = error.response?.data?.details?.missing;
@@ -52,17 +67,20 @@ export default function IngredientForm({ ingredient, onFinish }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setFormError("");
 
     try {
       if (isEditing) {
-        await api.put(`/admin/ingredients/${ingredient.id}`, { nombre, foodGroup, substitutionGroup });
+        await api.put(`/admin/ingredients/${ingredient.id}`, {
+          nombre, foodGroup, substitutionGroup,
+          ...(nutritionDirty ? { nutrition: { ...nutrition, source: nutritionSource, reference: nutritionReference } } : {})
+        });
       } else {
         await api.post("/admin/ingredients", { nombre, foodGroup, substitutionGroup });
       }
       onFinish();
     } catch (err) {
-      console.error(err);
-      alert("Ocurrió un error al crear el ingrediente");
+      setFormError(err.response?.data?.message || err.response?.data?.error || "No se pudo guardar el ingrediente");
     } finally {
       setSaving(false);
     }
@@ -70,6 +88,7 @@ export default function IngredientForm({ ingredient, onFinish }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {formError ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{formError}</p> : null}
       <div>
         <label className="font-medium block mb-1">Nombre del ingrediente</label>
         <input
@@ -114,6 +133,21 @@ export default function IngredientForm({ ingredient, onFinish }) {
           </button>)}
         </div> : null}
         {fdcResults.length ? <div className="mt-4 flex justify-end"><button type="button" disabled={!selectedFdcId || fdcBusy} onClick={() => void applyFoodData()} className="min-h-11 rounded-lg bg-green-700 px-5 text-sm font-semibold text-white disabled:opacity-40">{fdcBusy ? "Aplicando..." : "Aplicar perfil seleccionado"}</button></div> : null}
+      </section> : null}
+
+      {isEditing ? <section className="space-y-4 border-b border-gray-200 pb-5" aria-labelledby="manual-nutrition-heading">
+        <div>
+          <h3 id="manual-nutrition-heading" className="font-semibold text-gray-900">Perfil nutricional por 100 g</h3>
+          <p className="mt-1 text-sm text-gray-600">Usa esta vía cuando una ficha verificable no tenga una coincidencia USDA completa. Los ocho valores y la referencia son obligatorios.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {nutritionFields.map(([field, label, unit]) => <label key={field} className="text-sm font-medium text-gray-800"><span>{label}</span><span className="relative mt-1 block"><input type="number" min="0" step="0.01" required={nutritionDirty} value={nutrition[field]} onChange={(event) => { setNutrition((current) => ({ ...current, [field]: event.target.value })); setNutritionDirty(true); }} className="w-full rounded-lg border py-3 pl-3 pr-14" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{unit}</span></span></label>)}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm font-medium text-gray-800">Tipo de fuente<select value={nutritionSource} onChange={(event) => { setNutritionSource(event.target.value); setNutritionDirty(true); }} className="mt-1 w-full rounded-lg border bg-white p-3"><option value="manual">Carga manual documentada</option><option value="professional">Profesional de nutricion</option></select></label>
+          <label className="text-sm font-medium text-gray-800">Referencia<input type="text" maxLength="1000" required={nutritionDirty} value={nutritionReference} onChange={(event) => { setNutritionReference(event.target.value); setNutritionDirty(true); }} placeholder="URL, ficha tecnica o registro profesional" className="mt-1 w-full rounded-lg border p-3" /></label>
+        </div>
+        {nutritionDirty ? <p className="text-xs font-semibold text-amber-700">Cambios nutricionales pendientes de guardar. Se registrarán tu usuario y la fecha de revisión.</p> : null}
       </section> : null}
 
       <button
