@@ -1,5 +1,6 @@
 // src/pages/AdminPanel/Recipes/RecipeForm.jsx
 import { useEffect, useState } from "react";
+import { Calculator } from "lucide-react";
 import api from "../../../services/api";
 
 const nutrientFields = [
@@ -43,6 +44,8 @@ export default function RecipeForm({ recipe, onFinish }) {
     recipe?.ingredients?.map((item) => ({ id: item.id, nombre: item.nombre, amount: item.amount ?? "", unit: item.unit ?? "", amount_g: item.amount_g ?? "" })) || []
   );
   const [loading, setLoading] = useState(true);
+  const [calculating, setCalculating] = useState(false);
+  const [nutritionMessage, setNutritionMessage] = useState(null);
 
   // Cargar ingredientes desde la API
   useEffect(() => {
@@ -68,11 +71,54 @@ export default function RecipeForm({ recipe, onFinish }) {
     } else {
       setSelectedIngredients((current) => [...current, { id: ingredient.id, nombre: ingredient.nombre, amount: "", unit: "", amount_g: "" }]);
     }
+    invalidateCalculatedNutrition();
   };
 
   const updateIngredientQuantity = (id, field, value) => {
     setSelectedIngredients((current) => current.map((item) => item.id === id ? { ...item, [field]: value } : item));
+    if (field === "amount_g") invalidateCalculatedNutrition();
   };
+
+  const invalidateCalculatedNutrition = () => {
+    setNutrition((current) => current.nutrition_source === "calculated"
+      ? { ...current, nutrition_source: "unknown", nutrition_source_reference: "" }
+      : current);
+    setNutritionMessage(null);
+  };
+
+  const updateNutritionField = (field, value) => {
+    setNutrition((current) => ({
+      ...current,
+      [field]: value,
+      ...(current.nutrition_source === "calculated" ? { nutrition_source: "manual", nutrition_source_reference: "" } : {})
+    }));
+    setNutritionMessage(null);
+  };
+
+  const calculateNutrition = async () => {
+    try {
+      setCalculating(true);
+      setNutritionMessage(null);
+      const response = await api.post("/admin/recipes/calculate-nutrition", {
+        servings: nutrition.servings,
+        ingredients: selectedIngredients.map(({ id, amount_g }) => ({ id, amount_g }))
+      });
+      const { calorias: calculatedCalories, ...calculatedNutrition } = response.data;
+      setCalorias(calculatedCalories);
+      setNutrition((current) => ({ ...current, ...calculatedNutrition }));
+      setNutritionMessage({ type: "success", text: "Cálculo completado con perfiles de ingredientes revisados. Guarda la receta para aplicarlo." });
+    } catch (error) {
+      const details = error.response?.data?.details || [];
+      const names = details.map((item) => item.name).filter(Boolean).join(", ");
+      setNutritionMessage({ type: "error", text: names ? `Completa el perfil nutricional de: ${names}.` : error.response?.data?.message || "No se pudo calcular la nutrición." });
+    } finally {
+      setCalculating(false);
+    }
+  };
+
+  const calculationReady = selectedIngredients.length > 0
+    && Number(nutrition.servings) > 0
+    && selectedIngredients.every((item) => Number(item.amount_g) > 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -130,7 +176,7 @@ export default function RecipeForm({ recipe, onFinish }) {
           type="number"
           placeholder="Calorías"
           value={calorias}
-          onChange={(e) => setCalorias(e.target.value)}
+          onChange={(event) => { setCalorias(event.target.value); updateNutritionField("nutrition_source", nutrition.nutrition_source === "calculated" ? "manual" : nutrition.nutrition_source); }}
           className="w-full p-3 border rounded-xl"
           required
         />
@@ -151,6 +197,7 @@ export default function RecipeForm({ recipe, onFinish }) {
       <fieldset className="border-y border-gray-200 py-5">
         <legend className="px-2 text-base font-semibold text-gray-900">Nutrición por porción</legend>
         <p className="mb-4 text-sm text-gray-500">Registra únicamente valores revisados e indica su procedencia. Los campos vacíos reducen la confianza de la recomendación.</p>
+        {nutritionMessage ? <p role="status" className={`mb-4 rounded-lg border p-3 text-sm ${nutritionMessage.type === "error" ? "border-red-200 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-800"}`}>{nutritionMessage.text}</p> : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <label className="text-sm font-medium text-gray-700">Nivel de salud
             <input type="number" min="1" max="5" step="1" value={nutrition.nivel_salud} onChange={(event) => setNutrition((current) => ({ ...current, nivel_salud: event.target.value }))} className="mt-1 w-full rounded-lg border p-3" required />
@@ -159,11 +206,11 @@ export default function RecipeForm({ recipe, onFinish }) {
             <span className="relative block"><input type="number" min="0.01" step="0.01" value={nutrition.serving_size_g} onChange={(event) => setNutrition((current) => ({ ...current, serving_size_g: event.target.value }))} className="mt-1 w-full rounded-lg border p-3 pr-10" /><span className="pointer-events-none absolute inset-y-0 right-3 top-1 flex items-center text-xs text-gray-400">g</span></span>
           </label>
           <label className="text-sm font-medium text-gray-700">Porciones de la preparación
-            <input type="number" min="0.01" step="0.01" value={nutrition.servings} onChange={(event) => setNutrition((current) => ({ ...current, servings: event.target.value }))} className="mt-1 w-full rounded-lg border p-3" required />
+            <input type="number" min="0.01" step="0.01" value={nutrition.servings} onChange={(event) => { invalidateCalculatedNutrition(); setNutrition((current) => ({ ...current, servings: event.target.value })); }} className="mt-1 w-full rounded-lg border p-3" required />
           </label>
           {nutrientFields.map(([field, label, unit]) => (
             <label key={field} className="text-sm font-medium text-gray-700">{label}
-              <span className="relative block"><input type="number" min="0" step="0.01" value={nutrition[field]} onChange={(event) => setNutrition((current) => ({ ...current, [field]: event.target.value }))} className="mt-1 w-full rounded-lg border p-3 pr-10" /><span className="pointer-events-none absolute inset-y-0 right-3 top-1 flex items-center text-xs text-gray-400">{unit}</span></span>
+              <span className="relative block"><input type="number" min="0" step="0.01" value={nutrition[field]} onChange={(event) => updateNutritionField(field, event.target.value)} className="mt-1 w-full rounded-lg border p-3 pr-10" /><span className="pointer-events-none absolute inset-y-0 right-3 top-1 flex items-center text-xs text-gray-400">{unit}</span></span>
             </label>
           ))}
           <label className="text-sm font-medium text-gray-700">Fuente nutricional
@@ -217,7 +264,10 @@ export default function RecipeForm({ recipe, onFinish }) {
             <input aria-label={`Unidad de ${item.nombre}`} type="text" maxLength="30" required={Boolean(item.amount)} value={item.unit} onChange={(event) => updateIngredientQuantity(item.id, "unit", event.target.value)} placeholder="g, taza" className="min-w-0 rounded-lg border p-2" />
             <span className="relative col-span-2 sm:col-span-1"><input aria-label={`Gramos de ${item.nombre}`} type="number" min="0.01" step="0.01" value={item.amount_g} onChange={(event) => updateIngredientQuantity(item.id, "amount_g", event.target.value)} placeholder="Equivalencia en gramos" className="min-w-0 w-full rounded-lg border p-2 pr-7" /><span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-gray-400">g</span></span>
           </div>)}
-          <p className="border-t border-gray-100 px-3 py-2 text-xs text-gray-500">Cantidad y unidad alimentan Compras; la equivalencia en gramos permite calcular nutrientes.</p>
+          <div className="flex flex-col gap-3 border-t border-gray-100 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="max-w-xl text-xs text-gray-500">Cantidad y unidad alimentan Compras. Para calcular nutrientes, completa gramos y usa perfiles por 100 g revisados.</p>
+            <button type="button" disabled={!calculationReady || calculating} onClick={() => void calculateNutrition()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-green-700 px-4 text-sm font-semibold text-green-800 disabled:cursor-not-allowed disabled:opacity-40"><Calculator size={17} /> {calculating ? "Calculando..." : "Calcular nutrición"}</button>
+          </div>
         </div> : null}
         {!loading && ingredients.length === 0 ? <p className="py-6 text-center text-sm text-gray-500">No se encontraron ingredientes.</p> : null}
         <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
