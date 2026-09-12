@@ -40,7 +40,7 @@ export default function RecipeForm({ recipe, onFinish }) {
   const [ingredientQuery, setIngredientQuery] = useState("");
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [selectedIngredients, setSelectedIngredients] = useState(
-    recipe?.ingredients?.map((i) => i.id) || []
+    recipe?.ingredients?.map((item) => ({ id: item.id, nombre: item.nombre, amount: item.amount ?? "", unit: item.unit ?? "", amount_g: item.amount_g ?? "" })) || []
   );
   const [loading, setLoading] = useState(true);
 
@@ -62,12 +62,16 @@ export default function RecipeForm({ recipe, onFinish }) {
     fetchIngredients();
   }, [ingredientPage, ingredientSearch]);
 
-  const toggleIngredient = (id) => {
-    if (selectedIngredients.includes(id)) {
-      setSelectedIngredients(selectedIngredients.filter((i) => i !== id));
+  const toggleIngredient = (ingredient) => {
+    if (selectedIngredients.some((item) => item.id === ingredient.id)) {
+      setSelectedIngredients((current) => current.filter((item) => item.id !== ingredient.id));
     } else {
-      setSelectedIngredients([...selectedIngredients, id]);
+      setSelectedIngredients((current) => [...current, { id: ingredient.id, nombre: ingredient.nombre, amount: "", unit: "", amount_g: "" }]);
     }
+  };
+
+  const updateIngredientQuantity = (id, field, value) => {
+    setSelectedIngredients((current) => current.map((item) => item.id === id ? { ...item, [field]: value } : item));
   };
 
   const handleSubmit = async (e) => {
@@ -78,7 +82,7 @@ export default function RecipeForm({ recipe, onFinish }) {
       calorias,
       tiempo_preparacion: tiempo,
       ...nutrition,
-      ingredients: selectedIngredients.map(Number)
+      ingredients: selectedIngredients.map(({ id, amount, unit, amount_g }) => ({ id, amount, unit, amount_g }))
     };
 
     try {
@@ -194,9 +198,9 @@ export default function RecipeForm({ recipe, onFinish }) {
             <button
               key={i.id}
               type="button"
-              onClick={() => toggleIngredient(i.id)}
+              onClick={() => toggleIngredient(i)}
               className={`px-3 py-2 border rounded-xl text-center ${
-                selectedIngredients.includes(i.id)
+                selectedIngredients.some((item) => item.id === i.id)
                   ? "bg-green-600 text-white"
                   : "bg-white text-gray-800 hover:bg-gray-100"
               }`}
@@ -205,6 +209,16 @@ export default function RecipeForm({ recipe, onFinish }) {
             </button>
           ))}
         </div>
+        {selectedIngredients.length ? <div className="mt-5 border-y border-gray-200">
+          <div className="hidden grid-cols-[minmax(120px,1fr)_90px_90px_100px] gap-2 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 sm:grid"><span>Ingrediente</span><span>Cantidad</span><span>Unidad</span><span>Equivalencia</span></div>
+          {selectedIngredients.map((item) => <div key={item.id} className="grid grid-cols-2 items-center gap-2 border-t border-gray-100 px-3 py-3 text-sm sm:grid-cols-[minmax(120px,1fr)_90px_90px_100px] sm:py-2">
+            <span className="col-span-2 truncate font-medium sm:col-span-1" title={item.nombre}>{item.nombre}</span>
+            <input aria-label={`Cantidad de ${item.nombre}`} type="number" min="0.01" step="0.01" required={Boolean(item.unit)} value={item.amount} onChange={(event) => updateIngredientQuantity(item.id, "amount", event.target.value)} placeholder="--" className="min-w-0 rounded-lg border p-2" />
+            <input aria-label={`Unidad de ${item.nombre}`} type="text" maxLength="30" required={Boolean(item.amount)} value={item.unit} onChange={(event) => updateIngredientQuantity(item.id, "unit", event.target.value)} placeholder="g, taza" className="min-w-0 rounded-lg border p-2" />
+            <span className="relative col-span-2 sm:col-span-1"><input aria-label={`Gramos de ${item.nombre}`} type="number" min="0.01" step="0.01" value={item.amount_g} onChange={(event) => updateIngredientQuantity(item.id, "amount_g", event.target.value)} placeholder="Equivalencia en gramos" className="min-w-0 w-full rounded-lg border p-2 pr-7" /><span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-gray-400">g</span></span>
+          </div>)}
+          <p className="border-t border-gray-100 px-3 py-2 text-xs text-gray-500">Cantidad y unidad alimentan Compras; la equivalencia en gramos permite calcular nutrientes.</p>
+        </div> : null}
         {!loading && ingredients.length === 0 ? <p className="py-6 text-center text-sm text-gray-500">No se encontraron ingredientes.</p> : null}
         <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
           <button type="button" disabled={ingredientPage <= 1 || loading} onClick={() => setIngredientPage((value) => value - 1)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold disabled:opacity-40">Anterior</button>
