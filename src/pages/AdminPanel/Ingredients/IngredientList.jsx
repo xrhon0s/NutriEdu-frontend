@@ -16,6 +16,7 @@ export default function IngredientList({ onEdit }) {
   const [search, setSearch] = useState("");
   const [foodGroup, setFoodGroup] = useState("");
   const [substitutionGroup, setSubstitutionGroup] = useState("");
+  const [nutritionStatus, setNutritionStatus] = useState("incomplete");
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [ingredientToDelete, setIngredientToDelete] = useState(null);
@@ -26,7 +27,7 @@ export default function IngredientList({ onEdit }) {
     try {
       setLoading(true);
       setError("");
-      const response = await api.get("/admin/ingredients", { params: { page, limit: 15, search: search || undefined, foodGroup: foodGroup || undefined, substitutionGroup: substitutionGroup || undefined } });
+      const response = await api.get("/admin/ingredients", { params: { page, limit: 15, search: search || undefined, foodGroup: foodGroup || undefined, substitutionGroup: substitutionGroup || undefined, nutritionStatus: nutritionStatus || undefined } });
       setIngredients(response.data.items);
       setPagination(response.data.pagination);
     } catch (requestError) {
@@ -34,7 +35,7 @@ export default function IngredientList({ onEdit }) {
     } finally {
       setLoading(false);
     }
-  }, [foodGroup, page, search, substitutionGroup]);
+  }, [foodGroup, nutritionStatus, page, search, substitutionGroup]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -50,6 +51,7 @@ export default function IngredientList({ onEdit }) {
     setSearch("");
     setFoodGroup("");
     setSubstitutionGroup("");
+    setNutritionStatus("");
     setPage(1);
   };
 
@@ -77,11 +79,11 @@ export default function IngredientList({ onEdit }) {
     }
   };
 
-  const hasFilters = Boolean(search || foodGroup || substitutionGroup);
+  const hasFilters = Boolean(search || foodGroup || substitutionGroup || nutritionStatus);
 
   return (
     <div className="space-y-5">
-      <form onSubmit={submitSearch} className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(180px,0.7fr)_minmax(200px,0.8fr)_auto]" role="search">
+      <form onSubmit={submitSearch} className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_repeat(3,minmax(170px,0.65fr))_auto]" role="search">
         <label className="relative min-w-0">
           <span className="sr-only">Buscar ingredientes</span>
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={18} />
@@ -96,11 +98,15 @@ export default function IngredientList({ onEdit }) {
           <span className="sr-only">Grupo de sustitución</span>
           <select value={substitutionGroup} onChange={changeFilter(setSubstitutionGroup)} className="input-admin w-full"><option value="">Todas las sustituciones</option>{substitutionGroupOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
         </label>
+        <label>
+          <span className="sr-only">Estado nutricional</span>
+          <select value={nutritionStatus} onChange={changeFilter(setNutritionStatus)} className="input-admin w-full"><option value="">Todos los estados</option><option value="incomplete">Nutricion incompleta</option><option value="complete">Nutricion completa</option><option value="unreviewed">Sin fuente o revision</option></select>
+        </label>
         <Button variant="secondary" type="submit"><Search size={17} /> Buscar</Button>
       </form>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--color-text-muted)]">
-        <p><strong className="text-[var(--color-text)]">{pagination.total}</strong> ingredientes registrados</p>
+        <p><strong className="text-[var(--color-text)]">{pagination.total}</strong> {nutritionStatus === "incomplete" ? "ingredientes pendientes, priorizados por uso" : "ingredientes encontrados"}</p>
         {hasFilters ? <Button size="sm" variant="ghost" onClick={clearFilters}>Limpiar filtros</Button> : null}
       </div>
       <StatusMessage type="error" message={error} />
@@ -113,7 +119,7 @@ export default function IngredientList({ onEdit }) {
           </div>
           <div className="hidden overflow-hidden border-y border-[var(--color-border)] md:block">
             <table className="w-full table-fixed text-left text-sm">
-              <thead className="bg-[var(--color-surface-muted)] text-xs text-[var(--color-text-muted)]"><tr><th className="w-16 p-3">ID</th><th className="p-3">Ingrediente</th><th className="w-40 p-3">Grupo alimentario</th><th className="hidden w-48 p-3 lg:table-cell">Sustitución culinaria</th><th className="w-44 p-3 text-right">Acciones</th></tr></thead>
+              <thead className="bg-[var(--color-surface-muted)] text-xs text-[var(--color-text-muted)]"><tr><th className="w-16 p-3">ID</th><th className="p-3">Ingrediente</th><th className="w-40 p-3">Grupo alimentario</th><th className="hidden w-48 p-3 lg:table-cell">Sustitución culinaria</th><th className="w-40 p-3">Cobertura</th><th className="w-44 p-3 text-right">Acciones</th></tr></thead>
               <tbody>{ingredients.map((ingredient) => <IngredientRow key={ingredient.id} ingredient={ingredient} onEdit={onEdit} onDelete={setIngredientToDelete} />)}</tbody>
             </table>
           </div>
@@ -144,6 +150,7 @@ function IngredientRow({ ingredient, onEdit, onDelete }) {
       <td className="p-3 font-semibold text-[var(--color-text)]">{ingredient.nombre}</td>
       <td className="p-3">{foodGroupLabels[ingredient.food_group] || foodGroupLabels.other}</td>
       <td className="hidden p-3 text-[var(--color-text-muted)] lg:table-cell">{substitutionGroupLabels[ingredient.substitution_group] || substitutionGroupLabels.other}</td>
+      <td className="p-3"><NutritionCoverage ingredient={ingredient} /></td>
       <td className="p-3"><RowActions ingredient={ingredient} onEdit={onEdit} onDelete={onDelete} /></td>
     </tr>
   );
@@ -154,7 +161,7 @@ function IngredientCard({ ingredient, onEdit, onDelete }) {
     <article className="rounded-lg border border-[var(--color-border)] bg-white p-4">
       <p className="text-xs font-semibold text-[var(--color-text-muted)]">Ingrediente #{ingredient.id}</p>
       <h3 className="mt-1 font-bold text-[var(--color-text)]">{ingredient.nombre}</h3>
-      <dl className="mt-3 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-[var(--color-text-muted)]">Grupo</dt><dd className="mt-1 font-semibold text-[var(--color-text)]">{foodGroupLabels[ingredient.food_group] || foodGroupLabels.other}</dd></div><div><dt className="text-xs text-[var(--color-text-muted)]">Sustitución</dt><dd className="mt-1 font-semibold text-[var(--color-text)]">{substitutionGroupLabels[ingredient.substitution_group] || substitutionGroupLabels.other}</dd></div></dl>
+      <dl className="mt-3 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-[var(--color-text-muted)]">Grupo</dt><dd className="mt-1 font-semibold text-[var(--color-text)]">{foodGroupLabels[ingredient.food_group] || foodGroupLabels.other}</dd></div><div><dt className="text-xs text-[var(--color-text-muted)]">Sustitución</dt><dd className="mt-1 font-semibold text-[var(--color-text)]">{substitutionGroupLabels[ingredient.substitution_group] || substitutionGroupLabels.other}</dd></div><div className="col-span-2"><dt className="text-xs text-[var(--color-text-muted)]">Cobertura nutricional</dt><dd className="mt-1"><NutritionCoverage ingredient={ingredient} /></dd></div></dl>
       <div className="mt-4 border-t border-[var(--color-border)] pt-3"><RowActions ingredient={ingredient} onEdit={onEdit} onDelete={onDelete} /></div>
     </article>
   );
@@ -162,6 +169,14 @@ function IngredientCard({ ingredient, onEdit, onDelete }) {
 
 function RowActions({ ingredient, onEdit, onDelete }) {
   return <div className="flex items-center justify-end gap-1"><Button size="sm" variant="ghost" onClick={() => onEdit(ingredient)}><Pencil size={16} /> Editar</Button><Button size="sm" variant="ghost" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => onDelete(ingredient)}><Trash2 size={16} /> Eliminar</Button></div>;
+}
+
+const nutrientFields = ["calories_per_100g", "protein_per_100g", "carbs_per_100g", "fat_per_100g", "saturated_fat_per_100g", "sugar_per_100g", "fiber_per_100g", "sodium_mg_per_100g"];
+
+function NutritionCoverage({ ingredient }) {
+  const count = nutrientFields.filter((field) => ingredient[field] !== null && ingredient[field] !== undefined).length;
+  const complete = count === nutrientFields.length;
+  return <div className="space-y-1"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${complete ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-900"}`}>{count}/8 nutrientes</span><p className="text-xs text-[var(--color-text-muted)]">{ingredient.recipe_usage_count || 0} recetas · {ingredient.nutrition_source === "unknown" ? "sin fuente" : ingredient.nutrition_source}</p></div>;
 }
 
 function IngredientListSkeleton() {
